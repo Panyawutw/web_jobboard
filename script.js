@@ -65,12 +65,13 @@ const jobList = document.getElementById("job-list");
 //ดักจับเหตุการณ์เมื่อผู้ใช้พิมพ์ค้นหา
 Search.addEventListener("input", () =>{
 
-    const searchText = Search.value; // อ่านค่าที่ผู้ใช้พิมพ์ปัจจุบัน
+    const searchText = Search.value.toLowerCase(); // อ่านค่าที่ผู้ใช้พิมพ์ปัจจุบัน
     // ค้นหางานที่ชื่อ (title) หรือหมวดหมู่ (category) มีคำค้นหาซ่อนอยู่
     const searchresult = jobs.filter(item => 
-        item.title.includes(searchText) 
+        item.title.toLowerCase().includes(searchText) 
         || 
-        item.category.includes(searchText));
+        item.category.toLowerCase().includes(searchText)
+    );
 
     // แปลงข้อมูลงานที่หาเจอ ให้กลายเป็นโครงสร้าง HTML (Card)
     const jobCards = searchresult.map(job => {
