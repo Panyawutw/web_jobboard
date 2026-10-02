@@ -60,7 +60,10 @@ const jobs = [
 ];
 
 const jobList = document.getElementById("job-list");
-const jobCards = jobs.map(job => {
+let Search = "pyth";
+const searchresult = jobs.filter(item => item.title.includes(Search) || item.category.includes(Search));
+
+const jobCards = searchresult.map(job => {
     return `
         <div>
             <h2>${job.title}</h2>
@@ -71,3 +74,4 @@ const jobCards = jobs.map(job => {
     `;
 });
 jobList.innerHTML = jobCards.join("");
+
