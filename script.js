@@ -61,12 +61,13 @@ const jobs = [
 //ดึง Element จาก HTML มาเตรียมไว้ใช้งาน
 const Search = document.getElementById("search-input");
 const jobList = document.getElementById("job-list");
+const categorys = document.getElementById("categories");
 
 //ดักจับเหตุการณ์เมื่อผู้ใช้พิมพ์ค้นหา
 Search.addEventListener("input", () =>{
 
     const searchText = Search.value.toLowerCase(); // อ่านค่าที่ผู้ใช้พิมพ์ปัจจุบัน
-    // ค้นหางานที่ชื่อ (title) หรือหมวดหมู่ (category) มีคำค้นหาซ่อนอยู่
+    // ค้นหางานที่ชื่อ หรือ หมวดหมู่มีคำค้นหาซ่อนอยู่
     const searchresult = jobs.filter(item => 
         item.title.toLowerCase().includes(searchText) 
         || 
@@ -86,4 +87,40 @@ Search.addEventListener("input", () =>{
     });
     // รวม Card ทั้งหมดเข้าด้วยกัน แล้วพ่นออกไปแสดงผลบนหน้าเว็บ
     jobList.innerHTML = jobCards.join("");
+});
+
+// ดักจับการเปลี่ยนตัวเลือกใน Dropdown (Select)
+categorys.addEventListener("change", () => {
+
+    const categoryText = categorys.value.toLowerCase();
+    if (categoryText === "all") {
+       const jobCards = jobs.map(job => {
+    return `
+        <div>
+            <h2>${job.title}</h2>
+            <p>Category: ${job.category}</p>
+            <p>Budget: ${job.budget} บาท</p>
+            <p>Location: ${job.location}</p>
+        </div>
+    `;
+});
+    jobList.innerHTML = jobCards.join("");
+} else {
+     const Categ = jobs.filter(item => 
+    item.category.toLowerCase()===categoryText
+    );
+    const categoryCards = Categ.map(job => {
+        return `
+            <div>
+                <h2>${job.title}</h2>
+                <p>Category: ${job.category}</p>
+                <p>Budget: ${job.budget} บาท</p>
+                <p>Location: ${job.location}</p>
+            </div>
+        `;
+    });
+    
+    jobList.innerHTML = categoryCards.join("");
+}
+   
 });
