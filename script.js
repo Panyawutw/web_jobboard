@@ -71,7 +71,7 @@ const searchInput = document.getElementById("search-input");
 const jobList = document.getElementById("job-list");
 const categorySelect = document.getElementById("categories");
 const budgetSelect = document.getElementById("budgetfilter");
-
+const jobDetail = document.getElementById("job-detail");
 //ดักจับเหตุการณ์เมื่อผู้ใช้พิมพ์ค้นหา
 searchInput.addEventListener("input", () =>{
 
@@ -171,6 +171,18 @@ jobList.addEventListener("click", (event) => {
     if (button) {
         const clickedId = Number(button.dataset.jobId);
         const selectedJob = jobs.find(job => job.id === clickedId);
-        console.log(selectedJob); 
+        
+        if(selectedJob){
+            jobDetail.innerHTML = `
+                <h2>รายละเอียดงาน</h2>
+                <p><strong>ตำแหน่ง:</strong> ${selectedJob.title}</p>
+                <p><strong>ประเภท:</strong> ${selectedJob.category}</p>
+                <p><strong>งบประมาณ:</strong> ${selectedJob.budget} บาท</p>
+                <p><strong>สถานที่:</strong> ${selectedJob.location}</p>
+                <p><strong>รายละเอียด:</strong> ${selectedJob.description}</p>
+            `;
+        }else {
+            jobDetail.innerHTML = "<p>ไม่พบข้อมูลงาน</p>";
+        }
 }
 });
