@@ -24,6 +24,37 @@
       <option value="over20k">มากกว่า 20,000</option>
     </select>
 
+   <form id="job-form">
+    <h2>เพิ่มงานใหม่</h2>
+    
+    <div>
+        <label for="job-title">ชื่อตำแหน่งงาน:</label>
+        <input type="text" id="job-title" placeholder="ระบุตำแหน่งงาน หรือ ชื่อบริษัท">
+    </div>
+
+    <div>
+        <label for="job-category">ประเภทงาน:</label>
+        <input type="text" id="job-category" placeholder="ค้นหา ประเภทงาน">
+    </div>
+
+    <div>
+        <label for="job-budget">เงินเดือน (บาท):</label>
+        <input type="number" id="job-budget" placeholder="0">
+    </div>
+
+    <div>
+        <label for="job-location">สถานที่ปฏิบัติงาน:</label>
+        <input type="text" id="job-location" placeholder="ค้นหา สถานที่ปฏิบัติงาน">
+    </div>
+
+    <div>
+        <label for="job-description">Description:</label>
+        <textarea id="job-description" placeholder="กรอกรายละเอียดงาน..."></textarea>
+    </div>
+
+    <button type="submit">เพิ่มงาน</button>
+</form>
+
     <div id="job-list"></div>
     <div id="job-detail"></div>
     <script src="script.js"></script>
