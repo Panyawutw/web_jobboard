@@ -7,56 +7,87 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>Freelance Jobs</h1>
-    <input type="text" id="search-input" placeholder="Search jobs..." />
 
-    <select name="categories" id="categories">
-      <option value="All">All</option>
-      <option value="Web Development">Web Development</option>
-      <option value="Design">Design</option>
-      <option value="Java">Java</option>
-      <option value="Python">Python</option>
-    </select>
-    <select name="categories" id="budgetfilter">
-      <option value="All">All</option>
-      <option value="under10k">ต่ำกว่า 10,000</option>
-      <option value="10to20k">10,000 - 20,000</option>
-      <option value="over20k">มากกว่า 20,000</option>
-    </select>
+    <header>
+        <h1>FreelanceHub</h1>
+        <p style="text-align: center;">แพลตฟอร์มค้นหาและจัดการงานฟรีแลนซ์</p>
+    </header>
 
-   <form id="job-form">
-    <h2>เพิ่มงานใหม่</h2>
-    
-    <div>
-        <label for="job-title">ชื่อตำแหน่งงาน:</label>
-        <input type="text" id="job-title" placeholder="ระบุตำแหน่งงาน หรือ ชื่อบริษัท">
-    </div>
+    <main>
 
-    <div>
-        <label for="job-category">ประเภทงาน:</label>
-        <input type="text" id="job-category" placeholder="ค้นหา ประเภทงาน">
-    </div>
+        <!-- SEARCH AND FILTER -->
+        <section id="search-section">
+            <h2>ค้นหางาน</h2>
 
-    <div>
-        <label for="job-budget">เงินเดือน (บาท):</label>
-        <input type="number" id="job-budget" placeholder="0">
-    </div>
+            <label for="search-input">ค้นหาชื่องานหรือหมวดหมู่</label>
+            <input type="text" id="search-input" placeholder="เช่น Frontend Developer">
 
-    <div>
-        <label for="job-location">สถานที่ปฏิบัติงาน:</label>
-        <input type="text" id="job-location" placeholder="ค้นหา สถานที่ปฏิบัติงาน">
-    </div>
+            <label for="categories">หมวดหมู่</label>
+            <select id="categories">
+                <option value="All">ทุกหมวดหมู่</option>
+                <option value="Web Development">Web Development</option>
+                <option value="Design">Design</option>
+                <option value="Java">Java</option>
+                <option value="Python">Python</option>
+                <option value="Android">Android</option>
+                <option value="c#">C#</option>
+            </select>
 
-    <div>
-        <label for="job-description">Description:</label>
-        <textarea id="job-description" placeholder="กรอกรายละเอียดงาน..."></textarea>
-    </div>
+            <label for="budgetfilter">งบประมาณ</label>
+            <select id="budgetfilter">
+                <option value="All">ทุกงบประมาณ</option>
+                <option value="under10k">ต่ำกว่า 10,000 บาท</option>
+                <option value="10to20k">10,000–20,000 บาท</option>
+                <option value="over20k">มากกว่า 20,000 บาท</option>
+            </select>
+        </section>
 
-    <button type="submit">เพิ่มงาน</button>
-</form>
+        <!-- CREATE AND UPDATE FORM -->
+        <section id="job-form-section">
+            <h2 id="form-title">เพิ่มงานใหม่</h2>
 
-    <div id="job-list"></div>
-    <div id="job-detail"></div>
+            <form id="job-form">
+
+                <label for="job-title">ชื่องาน</label>
+                <input type="text" id="job-title" placeholder="กรอกชื่องาน" required>
+
+                <label for="job-category">หมวดหมู่</label>
+                <input type="text" id="job-category" placeholder="เช่น Web Development" required>
+
+                <label for="job-budget">งบประมาณ (บาท)</label>
+                <input type="number" id="job-budget" min="1" step="any" placeholder="กรอกงบประมาณ" required>
+
+                <label for="job-location">สถานที่ทำงาน</label>
+                <input type="text" id="job-location" placeholder="เช่น Remote หรือ Bangkok" required>
+
+                <label for="job-description">รายละเอียดงาน</label>
+                <textarea id="job-description" placeholder="อธิบายรายละเอียดของงาน" required></textarea>
+
+                <div class="form-actions">
+                    <button type="submit">เพิ่มงาน</button>
+                    <button type="reset" id="reset-form">ล้างฟอร์ม</button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- JOB LIST -->
+        <section>
+            <h2>รายการงาน</h2>
+            <div id="job-list"></div>
+        </section>
+
+        <!-- JOB DETAILS -->
+        <section>
+            <h2>รายละเอียดงาน</h2>
+            <div id="job-detail">
+                <p>เลือก View Details ของงานเพื่อดูรายละเอียด</p>
+            </div>
+        </section>
+
+    </main>
+
+
     <script src="script.js"></script>
   </body>
 </html>

@@ -1,15 +1,86 @@
-body{
-    font-family: Arial, Helvetica, sans-serif;
-    padding: 30px;
+* {
+  box-sizing: border-box;
 }
 
-#job-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f5f7fb;
+  color: #222;
 }
-#job-list > div{
-    border: 1px solid #ccc;
-    padding: 20px;
-    border-radius: 10px;
+h1 {
+  text-align: center;
+  color: #2457a7;
+}
+
+section {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font: inherit;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+button {
+  padding: 9px 14px;
+  margin: 4px 4px 4px 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #2457a7;
+  color: white;
+  font: inherit;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+.job-card {
+  border: 1px solid #ddd;
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.job-card h3 {
+  margin-top: 0;
+}
+
+.delete-job {
+  background-color: #c0392b;
+}
+
+.edit-job {
+  background-color: #d68910;
+}
+
+#job-detail {
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
