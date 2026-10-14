@@ -183,7 +183,7 @@ function filterJobs() {
 
         if(selectedBudget === "under10k") {
             matchesBudget = job.budget < 10000;
-        } else if(selectedBudget === "10kto20k") {
+        } else if(selectedBudget === "10to20k") {
             matchesBudget = 
             job.budget >= 10000 && 
             job.budget <= 20000;
@@ -219,11 +219,11 @@ jobList.addEventListener("click", (event) => {
     }
 
     jobDetail.innerHTML = `
-        <h2>${escapeHtml(selectedJob.title)}</h2>
-        <p>หมวดหมู่: ${escapeHtml(selectedJob.category)}</p>
+        <h2>${escapeHTML(selectedJob.title)}</h2>
+        <p>หมวดหมู่: ${escapeHTML(selectedJob.category)}</p>
         <p>งบประมาณ: ${selectedJob.budget.toLocaleString()} บาท</p>
-        <p>สถานที่: ${escapeHtml(selectedJob.location)}</p>
-        <p>รายละเอียด: ${escapeHtml(selectedJob.description)}</p>
+        <p>สถานที่: ${escapeHTML(selectedJob.location)}</p>
+        <p>รายละเอียด: ${escapeHTML(selectedJob.description)}</p>
     `;
 });
 
@@ -293,18 +293,18 @@ jobForm.addEventListener("submit", (event) => {
     }
 
     // ตรวจสอบว่ากำลังแก้ไขงานหรือเพิ่มงานใหม่
-    if(jobIndex !== null) {
-        const jobIndex = jobs.findIndex(
+    if(editJobId !== null) {
+        const editJobId = jobs.findIndex(
             (job) => job.id === editJobId
         );
 
-        if(jobIndex === -1) {
+        if(editJobId === -1) {
             alert("ไม่พบงานที่ต้องการแก้ไข");
             return;
         }
 
-        jobs[jobIndex] = {
-            ...jobs[jobIndex],
+        jobs[editJobId] = {
+            ...jobs[editJobId],
             ...newJobData
         };
 
@@ -352,11 +352,11 @@ jobList.addEventListener("click", (event) => {
     if (!confirmed) return;
 
     // ลบเฉพาะงานที่มี ID ตรงกับงานที่เลือก
-    const jobIndex = jobs.findIndex((job) => job.id === clickedId);
+    const editJobId = jobs.findIndex((job) => job.id === clickedId);
 
-    if (jobIndex === -1) return;
+    if (editJobId === -1) return;
 
-    jobs.splice(jobIndex, 1);
+    jobs.splice(editJobId, 1);
 
     // ถ้ากำลังแก้ไขงานที่ถูกลบ ให้ล้างฟอร์ม
     if (editJobId === clickedId) {
