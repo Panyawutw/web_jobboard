@@ -1,4 +1,6 @@
-const jobs = [
+"use strict";
+
+let jobs = [
     {
         id: 1,
         title: "Frontend Developer",
@@ -82,49 +84,80 @@ const descriptionInput = document.getElementById("job-description");
 
 const formTitle = document.getElementById("form-title");
 const submitBtn = jobForm.querySelector("button[type='submit']");
+const resetFormBtn = document.getElementById("reset-form");
 
 // เก็บ ID ของงานที่กำลังแก้ไข
 let editJobId = null;
 
+// ฟังก์ชันสำหรับตรวจสอบความถูกต้องของข้อมูลฟอร์ม
+function validateForm(data) {
+    if (
+        !data.title ||
+        !data.category ||
+        !data.budget ||
+        !data.location ||
+        !data.description
+    ) {
+        return "กรุณากรอกข้อมูลให้ครบทุกช่อง";
+    }
+    if(!Number.isFinite(data.budget) || data.budget <= 0) {
+        return "งบประมาณต้องเป็นตัวเลขที่มากกว่า 0";
+    }
+    return null;
+    
+}
+
+// ฟังก์ชันสำหรับป้องกัน Cross Site Scripting (XSS)
+function escapeHTML(value) {
+    const entities = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    };
+    return String(value).replace(/[&<>"']/g, (character) => {
+        return entities[character];
+    });
+}
 
 // ฟังก์ชันสำหรับแสดงรายการงาน
 function renderJobs(jobArray) {
-    jobList.innerHTML = "";
-
+   
     if (jobArray.length === 0) {
         jobList.innerHTML = "<p>ไม่พบงานที่ตรงกับเงื่อนไข</p>";
         return;
     }
 
-    jobArray.forEach((job) => {
-        const jobCard = document.createElement("div");
-
-        jobCard.className = "job-card";
-
-        jobCard.innerHTML = `
-            <h3>${job.title}</h3>
-            <p>หมวดหมู่: ${job.category}</p>
+    jobList.innerHTML = jobArray.map((job) => `
+        <div class="job-card">
+            <h3>${escapeHTML(job.title)}</h3>
+            <p>หมวดหมู่: ${escapeHTML(job.category)}</p>
             <p>งบประมาณ: ${job.budget.toLocaleString()} บาท</p>
-            <p>สถานที่: ${job.location}</p>
-
+            <p>สถานที่: ${escapeHTML(job.location)}</p>
+            
             <button
-                type="button"
-                class="view-details"
-                data-job-id="${job.id}">View Details</button>
+                type="button" 
+                class="view-details" 
+                data-job-id="${job.id}">
+                ดูรายละเอียด
+            </button>
 
-            <button
-                type="button"
-                class="edit-job"
-                data-job-id="${job.id}">Edit</button>
+            <button 
+                type="button" 
+                class="edit-job" 
+                data-job-id="${job.id}">
+                แก้ไข
+            </button>
 
-            <button
-                type="button"
-                class="delete-job"
-                data-job-id="${job.id}">Delete</button>
-        `;
-
-        jobList.appendChild(jobCard);
-    });
+            <button 
+                type="button" 
+                class="delete-job" 
+                data-job-id="${job.id}">
+                ลบ
+            </button>
+        </div>
+    `).join("");
 }
 
 
@@ -135,28 +168,32 @@ function filterJobs() {
     const selectedBudget = budgetSelect.value;
 
     const filteredJobs = jobs.filter((job) => {
-        const matchesSearch =
-            job.title.toLowerCase().includes(searchText) ||
-            job.category.toLowerCase().includes(searchText);
+        const title = job.title.toLowerCase();
+        const category = job.category.toLowerCase();
+
+        const matchesSearch = 
+        title.includes(searchText) || 
+        category.includes(searchText);
 
         const matchesCategory =
-            selectedCategory === "all" ||
-            job.category.toLowerCase() === selectedCategory;
+        selectedCategory === "all" || 
+        category === selectedCategory;
 
         let matchesBudget = true;
 
-        if (selectedBudget === "under10k") {
+        if(selectedBudget === "under10k") {
             matchesBudget = job.budget < 10000;
-        } else if (selectedBudget === "10to20k") {
-            matchesBudget =
-                job.budget >= 10000 && job.budget <= 20000;
-        } else if (selectedBudget === "over20k") {
+        } else if(selectedBudget === "10kto20k") {
+            matchesBudget = 
+            job.budget >= 10000 && 
+            job.budget <= 20000;
+        }else if(selectedBudget === "over20k") {
             matchesBudget = job.budget > 20000;
         }
 
         return matchesSearch && matchesCategory && matchesBudget;
+
     });
- 
     renderJobs(filteredJobs);
 }
 
@@ -169,35 +206,41 @@ budgetSelect.addEventListener("change", filterJobs);
 
 // VIEW: แสดงรายละเอียดงาน
 jobList.addEventListener("click", (event) => {
-    const button = event.target.closest("button.view-details");
+    const button = event.target.closest(".view-details");
 
     if (!button) return;
 
     const clickedId = Number(button.dataset.jobId);
     const selectedJob = jobs.find((job) => job.id === clickedId);
 
-    if (!selectedJob) return;
+    if (!selectedJob) {
+        jobDetail.textContent = "ไม่พบข้อมูลงานนี้";
+        return;
+    }
 
     jobDetail.innerHTML = `
-        <h2>${selectedJob.title}</h2>
-        <p>หมวดหมู่: ${selectedJob.category}</p>
+        <h2>${escapeHtml(selectedJob.title)}</h2>
+        <p>หมวดหมู่: ${escapeHtml(selectedJob.category)}</p>
         <p>งบประมาณ: ${selectedJob.budget.toLocaleString()} บาท</p>
-        <p>สถานที่: ${selectedJob.location}</p>
-        <p>รายละเอียด: ${selectedJob.description}</p>
+        <p>สถานที่: ${escapeHtml(selectedJob.location)}</p>
+        <p>รายละเอียด: ${escapeHtml(selectedJob.description)}</p>
     `;
 });
 
 
 // UPDATE: เลือกงานแล้วนำข้อมูลใส่ในฟอร์ม
 jobList.addEventListener("click", (event) => {
-    const button = event.target.closest("button.edit-job");
+    const button = event.target.closest(".edit-job");
 
     if (!button) return;
 
     const clickedId = Number(button.dataset.jobId);
     const selectedJob = jobs.find((job) => job.id === clickedId);
 
-    if (!selectedJob) return;
+    if (!selectedJob) {
+        alert("ไม่พบงานที่ต้องการแก้ไข");
+        return;
+    }
 
     editJobId = selectedJob.id;
 
@@ -216,17 +259,91 @@ jobList.addEventListener("click", (event) => {
     });
 });
 
+// ฟังก์ชันสำหรับรีเซ็ตฟอร์มและกลับสู่โหมดเพิ่มงานใหม่
+function resetJobForm() {
+    jobForm.reset();
+    editJobId = null;
+    formTitle.textContent = "เพิ่มงานใหม่";
+    submitBtn.textContent = "เพิ่มงาน";
+}
+
+// CREATE + UPDATE: เพิ่มงานใหม่หรือบันทึกการแก้ไข
+jobForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const newJobData = {
+        title: titleInput.value.trim(),
+        category: categoryInput.value.trim(),
+        budget: Number(budgetInput.value),
+        location: locationInput.value.trim(),
+        description: descriptionInput.value.trim()
+    };
+
+    // ตรวจสอบความถูกต้องของข้อมูลฟอร์ม
+    const validationError = validateForm({
+        ...newJobData,
+        budget: budgetInput.value.trim() 
+            ? Number(budgetInput.value) 
+            : NaN
+    });
+
+    if(validationError) {
+        alert(validationError);
+        return;
+    }
+
+    // ตรวจสอบว่ากำลังแก้ไขงานหรือเพิ่มงานใหม่
+    if(jobIndex !== null) {
+        const jobIndex = jobs.findIndex(
+            (job) => job.id === editJobId
+        );
+
+        if(jobIndex === -1) {
+            alert("ไม่พบงานที่ต้องการแก้ไข");
+            return;
+        }
+
+        jobs[jobIndex] = {
+            ...jobs[jobIndex],
+            ...newJobData
+        };
+
+        alert("แก้ไขงานเรียบร้อยแล้ว");
+
+    } else {
+
+        // สร้าง ID ใหม่โดยหาค่า ID สูงสุดแล้วบวก 1
+        const newId = jobs.reduce(
+            (maxId, job) => Math.max(maxId, job.id),
+             0) + 1;
+
+             jobs.push({
+                id: newId,
+                ...newJobData
+             });
+
+        alert("เพิ่มงานใหม่เรียบร้อยแล้ว");
+    }
+
+    // รีเซ็ตฟอร์มและแสดงรายการงานใหม่
+    resetJobForm();
+    jobDetail.innerHTML = "";
+    filterJobs();
+});
 
 // DELETE: ลบงาน
 jobList.addEventListener("click", (event) => {
-    const button = event.target.closest("button.delete-job");
+    const button = event.target.closest(".delete-job");
 
     if (!button) return;
 
     const clickedId = Number(button.dataset.jobId);
     const selectedJob = jobs.find((job) => job.id === clickedId);
 
-    if (!selectedJob) return;
+    if (!selectedJob) {
+        alert("ไม่พบงานที่ต้องการลบ");
+        return;
+    }
 
     const confirmed = confirm(
         `ต้องการลบงาน "${selectedJob.title}" ใช่หรือไม่?`
@@ -243,107 +360,15 @@ jobList.addEventListener("click", (event) => {
 
     // ถ้ากำลังแก้ไขงานที่ถูกลบ ให้ล้างฟอร์ม
     if (editJobId === clickedId) {
-        editJobId = null;
-        jobForm.reset();
-
-        formTitle.textContent = "เพิ่มงานใหม่";
-        submitBtn.textContent = "เพิ่มงาน";
+        resetJobForm();
     }
 
     // ล้างรายละเอียด ถ้ากำลังแสดงงานที่ถูกลบ
-    jobDetail.innerHTML = "";
+    jobDetail.innerHTML = "<p>เลือก View Details ของงานดพื่อดูรายละเอียด</p>";
 
     filterJobs();
 
     alert("ลบงานเรียบร้อยแล้ว");
-});
-
-
-// CREATE + UPDATE: เพิ่มงานใหม่หรือบันทึกการแก้ไข
-jobForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const newtitle = titleInput.value.trim();
-    const newcategory = categoryInput.value.trim();
-    const newbudget = budgetInput.value.trim();
-    const newlocation = locationInput.value.trim();
-    const newdescription = descriptionInput.value.trim();
-
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (
-        !newtitle ||
-        !newcategory ||
-        !newbudget ||
-        !newlocation ||
-        !newdescription
-    ) {
-        alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
-        return;
-    }
-
-    const budgetNum = Number(newbudget);
-
-    if (!Number.isFinite(budgetNum) || budgetNum <= 0) {
-        alert("งบประมาณต้องเป็นตัวเลขที่มากกว่า 0");
-        return;
-    }
-
-    // UPDATE: ถ้ามี editJobId ให้แก้ไขงานเดิม
-    if (editJobId !== null) {
-        const jobIndex = jobs.findIndex(
-            (job) => job.id === editJobId
-        );
-
-        if (jobIndex === -1) {
-            alert("ไม่พบงานที่ต้องการแก้ไข");
-            editJobId = null;
-            return;
-        }
-
-        jobs[jobIndex] = {
-            ...jobs[jobIndex],
-            title: newtitle,
-            category: newcategory,
-            budget: budgetNum,
-            location: newlocation,
-            description: newdescription
-        };
-
-        alert("แก้ไขงานเรียบร้อยแล้ว");
-
-    } else {
-        // CREATE: สร้าง ID ใหม่โดยไม่ซ้ำกับงานเดิม
-        const newId = jobs.reduce(
-            (maxId, job) => Math.max(maxId, job.id),
-            0
-        ) + 1;
-
-        const newJobData = {
-            id: newId,
-            title: newtitle,
-            category: newcategory,
-            budget: budgetNum,
-            location: newlocation,
-            description: newdescription
-        };
-
-        jobs.push(newJobData);
-
-        alert("เพิ่มงานเรียบร้อยแล้ว");
-    }
-
-    // กลับสู่โหมดเพิ่มงาน
-    editJobId = null;
-
-    jobForm.reset();
-
-    formTitle.textContent = "เพิ่มงานใหม่";
-    submitBtn.textContent = "เพิ่มงาน";
-
-    jobDetail.innerHTML = "";
-
-    // แสดงรายการล่าสุดตามเงื่อนไขค้นหาและตัวกรอง
-    filterJobs();
 });
 
 // แสดงงานเมื่อเปิดหน้าเว็บครั้งแรก
