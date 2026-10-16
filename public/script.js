@@ -1,72 +1,5 @@
 "use strict";
 
-let jobs = [
-    {
-        id: 1,
-        title: "Frontend Developer",
-        category: "Web Development",
-        budget: 15000,
-        location: "Remote",
-        description: "พัฒนาเว็บไซต์ส่วน Frontend"
-    },
-    {
-        id: 2,
-        title: "UI Designer",
-        category: "Design",
-        budget: 8000,
-        location: "Remote",
-        description: "ออกแบบหน้าตาและประสบการณ์การใช้งานเว็บไซต์"
-    },
-    {
-        id: 3,
-        title: "Backend Developer",
-        category: "Web Development",
-        budget: 20000,
-        location: "Bangkok",
-        description: "พัฒนาระบบ Backend และ API"
-    },
-    {
-        id: 4,
-        title: "Full Stack",
-        category: "Web Development",
-        budget: 30000,
-        location: "Bangkok",
-        description: "พัฒนาทั้งส่วน Frontend และ Backend"
-    },
-    {
-        id: 5,
-        title: "Android",
-        category: "Android",
-        budget: 6000,
-        location: "หนองคาย",
-        description: "พัฒนาแอปพลิเคชัน Android"
-    },
-    {
-        id: 6,
-        title: "Data Analyst",
-        category: "java",
-        budget: 6500,
-        location: "หนองคาย",
-        description: "วิเคราะห์และจัดการข้อมูล"
-    },
-    {
-        id: 7,
-        title: "Data Engineer",
-        category: "c#",
-        budget: 40000,
-        location: "อุดร",
-        description: "พัฒนาระบบจัดการและประมวลผลข้อมูล"
-    },
-    {
-        id: 8,
-        title: "DevOps",
-        category: "python",
-        budget: 40000,
-        location: "ภูเก็ต",
-        description: "ดูแลระบบและกระบวนการ Deploy"
-    }
-]; 
-
 //ดึง Element จาก HTML  
 const searchInput = document.getElementById("search-input"); 
 const jobList = document.getElementById("job-list"); 
@@ -86,25 +19,41 @@ const formTitle = document.getElementById("form-title");
 const submitBtn = jobForm.querySelector("button[type='submit']");
 const resetFormBtn = document.getElementById("reset-form");
 
-// เก็บ ID ของงานที่กำลังแก้ไข
-let editJobId = null;
+let jobs = []; // Array สำหรับเก็บข้อมูลงาน
+let editJobId = null; // เก็บ ID ของงานที่กำลังแก้ไข
+let isSaving = false; // ป้องกันการกด submit ซ้ำ
 
-// ฟังก์ชันสำหรับตรวจสอบความถูกต้องของข้อมูลฟอร์ม
-function validateForm(data) {
-    if (
-        !data.title ||
-        !data.category ||
-        !data.budget ||
-        !data.location ||
-        !data.description
-    ) {
-        return "กรุณากรอกข้อมูลให้ครบทุกช่อง";
+
+async function apiRequest(url, options = {}){
+
+    let response;
+
+    try {
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.body
+                    ? { "Content-Type": "application/json" }
+                    : {}),
+                ...options.headers
+            }
+        });    
+    } catch (error) {
+        throw new Error(
+            "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบว่า Node.js กำลังทำงาน"
+        );
     }
-    if(!Number.isFinite(data.budget) || data.budget <= 0) {
-        return "งบประมาณต้องเป็นตัวเลขที่มากกว่า 0";
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(
+            data.error || `เกิดข้อผิดพลาด HTTP ${response.status}`
+        );
     }
-    return null;
-    
+
+    return data;
+
 }
 
 // ฟังก์ชันสำหรับป้องกัน Cross Site Scripting (XSS)
@@ -119,6 +68,16 @@ function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, (character) => {
         return entities[character];
     });
+}
+
+function showError(message) {
+    jobList.textContent = "";
+
+    const errorMessage = document.createElement('p');
+    errorMessage.setAttribute('role','alert');
+    errorMessage.textContent = message;
+
+    jobList.appendChild(errorMessage);
 }
 
 // ฟังก์ชันสำหรับแสดงรายการงาน
@@ -160,6 +119,16 @@ function renderJobs(jobArray) {
     `).join("");
 }
 
+async function loadJobs() {
+    jobList.textContent = "กำลังโหลดรายการงาน...";
+
+    try {
+        jobs = await apiRequest('/api/jobs');
+        filterJobs();
+    } catch (error) {
+        showError(error.message);
+    }
+}
 
 // ฟังก์ชันสำหรับกรองงานตามเงื่อนไขค้นหาและตัวกรอง
 function filterJobs() {
@@ -197,66 +166,65 @@ function filterJobs() {
     renderJobs(filteredJobs);
 }
 
-
 // เพิ่ม Event Listener สำหรับการค้นหาและตัวกรอง
 searchInput.addEventListener("input", filterJobs);
 categorySelect.addEventListener("change", filterJobs);
 budgetSelect.addEventListener("change", filterJobs);
 
-
 // VIEW: แสดงรายละเอียดงาน
-jobList.addEventListener("click", (event) => {
+jobList.addEventListener("click", async (event) => {
     const button = event.target.closest(".view-details");
 
     if (!button) return;
 
     const clickedId = Number(button.dataset.jobId);
-    const selectedJob = jobs.find((job) => job.id === clickedId);
+    jobDetail.textContent = "กำลังโหลดรายละเอียด...";
 
-    if (!selectedJob) {
-        jobDetail.textContent = "ไม่พบข้อมูลงานนี้";
-        return;
-    }
+    try {
+        const job =await apiRequest(`/api/jobs/${clickedId}`);
 
     jobDetail.innerHTML = `
-        <h2>${escapeHTML(selectedJob.title)}</h2>
-        <p>หมวดหมู่: ${escapeHTML(selectedJob.category)}</p>
-        <p>งบประมาณ: ${selectedJob.budget.toLocaleString()} บาท</p>
-        <p>สถานที่: ${escapeHTML(selectedJob.location)}</p>
-        <p>รายละเอียด: ${escapeHTML(selectedJob.description)}</p>
-    `;
+            <h3>${escapeHTML(job.title)}</h3>
+            <p>หมวดหมู่: ${escapeHTML(job.category)}</p>
+            <p>งบประมาณ: ${job.budget.toLocaleString()} บาท</p>
+            <p>สถานที่: ${escapeHTML(job.location)}</p>
+            <p>รายละเอียด: ${escapeHTML(job.description)}</p>
+        `;
+    } catch (error) {
+        jobDetail.textContent = error.message;
+    }
 });
 
-
 // UPDATE: เลือกงานแล้วนำข้อมูลใส่ในฟอร์ม
-jobList.addEventListener("click", (event) => {
+jobList.addEventListener("click", async (event) => {
     const button = event.target.closest(".edit-job");
 
     if (!button) return;
 
     const clickedId = Number(button.dataset.jobId);
-    const selectedJob = jobs.find((job) => job.id === clickedId);
+    
 
-    if (!selectedJob) {
-        alert("ไม่พบงานที่ต้องการแก้ไข");
-        return;
+     try {
+        const job = await apiRequest(`/api/jobs/${clickedId}`);
+
+        editJobId = job.id;
+
+        titleInput.value = job.title;
+        categoryInput.value = job.category;
+        budgetInput.value = job.budget;
+        locationInput.value = job.location;
+        descriptionInput.value = job.description;
+
+        formTitle.textContent = "แก้ไขงาน";
+        submitBtn.textContent = "บันทึกการแก้ไข";
+
+        jobForm.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    } catch (error) {
+        alert(error.message);
     }
-
-    editJobId = selectedJob.id;
-
-    titleInput.value = selectedJob.title;
-    categoryInput.value = selectedJob.category;
-    budgetInput.value = selectedJob.budget;
-    locationInput.value = selectedJob.location;
-    descriptionInput.value = selectedJob.description;
-
-    formTitle.textContent = "แก้ไขงาน";
-    submitBtn.textContent = "บันทึกการแก้ไข";
-
-    jobForm.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
 });
 
 // ฟังก์ชันสำหรับรีเซ็ตฟอร์มและกลับสู่โหมดเพิ่มงานใหม่
@@ -265,74 +233,95 @@ function resetJobForm() {
     editJobId = null;
     formTitle.textContent = "เพิ่มงานใหม่";
     submitBtn.textContent = "เพิ่มงาน";
+    submitBtn.disabled = false;
+    isSaving = false;
 }
 
-// CREATE + UPDATE: เพิ่มงานใหม่หรือบันทึกการแก้ไข
-jobForm.addEventListener("submit", (event) => {
+resetFormBtn.addEventListener('click',(event) => {
     event.preventDefault();
+    resetJobForm();
+});
+
+// ฟังก์ชันสำหรับตรวจสอบความถูกต้องของข้อมูลฟอร์ม
+function validateForm(data) {
+    if (
+        !data.title ||
+        !data.category ||
+        !data.budget ||
+        !data.location ||
+        !data.description
+    ) {
+        return "กรุณากรอกข้อมูลให้ครบทุกช่อง";
+    }
+    if(!Number.isFinite(data.budget) || data.budget <= 0) {
+        return "งบประมาณต้องเป็นตัวเลขที่มากกว่า 0";
+    }
+    return null;
+    
+}
+
+
+
+// CREATE + UPDATE: เพิ่มงานใหม่หรือบันทึกการแก้ไข
+jobForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (isSaving) return;
+
+    const rawBudget = budgetInput.value.trim();
 
     const newJobData = {
         title: titleInput.value.trim(),
         category: categoryInput.value.trim(),
-        budget: Number(budgetInput.value),
+        budget: rawBudget === "" ? NaN : Number(rawBudget),
         location: locationInput.value.trim(),
         description: descriptionInput.value.trim()
     };
 
-    // ตรวจสอบความถูกต้องของข้อมูลฟอร์ม
-    const validationError = validateForm({
-        ...newJobData,
-        budget: budgetInput.value.trim() 
-            ? Number(budgetInput.value) 
-            : NaN
-    });
+    const validationError = validateForm(newJobData);
 
-    if(validationError) {
+    if (validationError) {
         alert(validationError);
         return;
     }
 
-    // ตรวจสอบว่ากำลังแก้ไขงานหรือเพิ่มงานใหม่
-    if(editJobId !== null) {
-        const editJobId = jobs.findIndex(
-            (job) => job.id === editJobId
-        );
+    isSaving = true;
+    submitBtn.disabled = true;
 
-        if(editJobId === -1) {
-            alert("ไม่พบงานที่ต้องการแก้ไข");
-            return;
+    try {
+        if (editJobId !== null) {
+            // UPDATE
+            await apiRequest(`/api/jobs/${editJobId}`, {
+                method: "PUT",
+                body: JSON.stringify(newJobData)
+            });
+
+            alert("แก้ไขงานเรียบร้อยแล้ว");
+        } else {
+            // CREATE
+            await apiRequest("/api/jobs", {
+                method: "POST",
+                body: JSON.stringify(newJobData)
+            });
+
+            alert("เพิ่มงานเรียบร้อยแล้ว");
         }
 
-        jobs[editJobId] = {
-            ...jobs[editJobId],
-            ...newJobData
-        };
+        resetJobForm();
+        jobDetail.innerHTML =
+            "<p>เลือก View Details ของงานเพื่อดูรายละเอียด</p>";
 
-        alert("แก้ไขงานเรียบร้อยแล้ว");
-
-    } else {
-
-        // สร้าง ID ใหม่โดยหาค่า ID สูงสุดแล้วบวก 1
-        const newId = jobs.reduce(
-            (maxId, job) => Math.max(maxId, job.id),
-             0) + 1;
-
-             jobs.push({
-                id: newId,
-                ...newJobData
-             });
-
-        alert("เพิ่มงานใหม่เรียบร้อยแล้ว");
+        await loadJobs();
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        isSaving = false;
+        submitBtn.disabled = false;
     }
-
-    // รีเซ็ตฟอร์มและแสดงรายการงานใหม่
-    resetJobForm();
-    jobDetail.innerHTML = "";
-    filterJobs();
 });
 
 // DELETE: ลบงาน
-jobList.addEventListener("click", (event) => {
+jobList.addEventListener("click", async (event) => {
     const button = event.target.closest(".delete-job");
 
     if (!button) return;
@@ -351,25 +340,28 @@ jobList.addEventListener("click", (event) => {
 
     if (!confirmed) return;
 
-    // ลบเฉพาะงานที่มี ID ตรงกับงานที่เลือก
-    const editJobId = jobs.findIndex((job) => job.id === clickedId);
+    button.disabled = true;
 
-    if (editJobId === -1) return;
+        try {
+        await apiRequest(`/api/jobs/${clickedId}`, {
+            method: "DELETE"
+        });
 
-    jobs.splice(editJobId, 1);
+        if (editJobId === clickedId) {
+            resetJobForm();
+        }
 
-    // ถ้ากำลังแก้ไขงานที่ถูกลบ ให้ล้างฟอร์ม
-    if (editJobId === clickedId) {
-        resetJobForm();
+        jobDetail.innerHTML =
+            "<p>เลือก View Details ของงานเพื่อดูรายละเอียด</p>";
+
+        await loadJobs();
+
+        alert("ลบงานเรียบร้อยแล้ว");
+    } catch (error) {
+        alert(error.message);
+        button.disabled = false;
     }
-
-    // ล้างรายละเอียด ถ้ากำลังแสดงงานที่ถูกลบ
-    jobDetail.innerHTML = "<p>เลือก View Details ของงานดพื่อดูรายละเอียด</p>";
-
-    filterJobs();
-
-    alert("ลบงานเรียบร้อยแล้ว");
 });
 
 // แสดงงานเมื่อเปิดหน้าเว็บครั้งแรก
-filterJobs();
+loadJobs();

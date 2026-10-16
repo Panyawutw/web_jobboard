@@ -1,3 +1,5 @@
+"use strict";
+
 const express = require('express');
 const path = require('path');
 
@@ -5,12 +7,132 @@ const app = express();
 const PORT = 3000;
 
 // แปลง JSON ที่ส่งมาจาก Client ให้เป็น JavaScript object
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // กำหนดเส้นทางสำหรับไฟล์ static (เช่น HTML, CSS, JS) ในโฟลเดอร์ 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// กำหนดเส้นทางสำหรับ API
+// ข้อมูลตัวอย่างของงาน
+let jobs = [
+    {
+        id: 1,
+        title: "Frontend Developer",
+        category: "Web Development",
+        budget: 15000,
+        location: "Remote",
+        description: "พัฒนาเว็บไซต์ส่วน Frontend"
+    },
+    {
+        id: 2,
+        title: "UI Designer",
+        category: "Design",
+        budget: 8000,
+        location: "Remote",
+        description: "ออกแบบหน้าตาและประสบการณ์การใช้งานเว็บไซต์"
+    },
+    {
+        id: 3,
+        title: "Backend Developer",
+        category: "Web Development",
+        budget: 20000,
+        location: "Bangkok",
+        description: "พัฒนาระบบ Backend และ API"
+    },
+    {
+        id: 4,
+        title: "Full Stack",
+        category: "Web Development",
+        budget: 30000,
+        location: "Bangkok",
+        description: "พัฒนาทั้งส่วน Frontend และ Backend"
+    },
+    {
+        id: 5,
+        title: "Android",
+        category: "Android",
+        budget: 6000,
+        location: "หนองคาย",
+        description: "พัฒนาแอปพลิเคชัน Android"
+    },
+    {
+        id: 6,
+        title: "Data Analyst",
+        category: "java",
+        budget: 6500,
+        location: "หนองคาย",
+        description: "วิเคราะห์และจัดการข้อมูล"
+    },
+    {
+        id: 7,
+        title: "Data Engineer",
+        category: "c#",
+        budget: 40000,
+        location: "อุดร",
+        description: "พัฒนาระบบจัดการและประมวลผลข้อมูล"
+    },
+    {
+        id: 8,
+        title: "DevOps",
+        category: "python",
+        budget: 40000,
+        location: "ภูเก็ต",
+        description: "ดูแลระบบและกระบวนการ Deploy"
+    }
+]; 
+
+// ฟังก์ชันตรวจสอบความถูกต้องของข้อมูลงาน
+function validateJob(body) {
+    // ตรวจสอบว่าข้อมูลที่ส่งมามีชนิดเป็น string และไม่ว่างเปล่า
+    const title = typeof body.title === 'string'
+        ? body.title.trim()
+        : '';
+    const category = typeof body.category === 'string'
+        ? body.category.trim()
+        : '';
+    const location = typeof body.location === 'string'
+        ? body.location.trim()
+        : '';
+        const description = typeof body.description === 'string'
+        ? body.description.trim()
+        : '';
+
+        // ตรวจสอบว่าข้อมูลที่จำเป็นถูกกรอกครบถ้วน
+        if (!title || !category || !location || !description) {
+            return {
+                error: "กรุณากรอกข้อมูลให้ครบถ้วน"
+            };
+        }
+        
+            if (
+                body.budget === "" ||
+                body.budget === null ||
+                body.budget === undefined 
+            ) {
+                return {
+                    error: "กรุณากรอกงบประมาณ"
+                };
+            }
+            
+            const budget = Number(body.budget);
+
+            if (!Number.isInteger(budget) || budget <= 0) {
+                return {
+                    error: "งบประมาณต้องเป็นตัวเลขที่มากกว่า 0"
+                };
+            }
+
+            return {
+                data: {
+                    title,
+                    category,
+                    budget,
+                    location,
+                    description
+                }
+            };
+}
+
+// ตรวจสอบสถานะของเซิร์ฟเวอร์
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
@@ -18,35 +140,131 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-
-// ข้อมูลตัวอย่างสำหรับทดลอง API
-// ขั้นนี้ยังเก็บข้อมูลไว้ในหน่วยความจำเท่านั้น
-const jobs = [
-    {
-        id: 1,
-        title: "Frontend Developer",
-        category: "Web Development",
-        budget: 15000,
-        location: "Remote"
-    },
-    {
-        id: 2,
-        title: "UI Designer",
-        category: "Design",
-        budget: 8000,
-        location: "Remote"
-    },
-    {
-        id: 3,
-        title: "Backend Developer",
-        category: "Web Development",
-        budget: 20000,
-        location: "Bangkok"
-    }
-];
-
+// ดึงข้อมูลงานทั้งหมด
 app.get('/api/jobs', (req, res) => {
     res.json(jobs);
+});
+
+// ดึงข้อมูลงานตามรหัส
+app.get('/api/jobs/:id', (req, res) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: "รหัสงานต้องเป็นตัวเลขที่มากกว่า 0"
+        });
+    }
+
+    const job = jobs.find(job => job.id === id);
+    
+    if (!job) {
+        return res.status(404).json({
+            error: "ไม่พบงานที่มีรหัสนี้"
+        });
+    }
+
+    res.json(job);
+});
+
+// เพิ่มงานใหม่
+// เพิ่มงานใหม่
+app.post('/api/jobs', (req, res) => {
+    const result = validateJob(req.body || {});
+
+    if (result.error) {
+        return res.status(400).json({
+            error: result.error 
+        });
+    }
+
+    const nextId = jobs.reduce(
+        (maxId, job) => Math.max(maxId, (job && job.id) ? job.id : 0), 0
+    ) + 1;
+
+    const createdJob = {
+        id: nextId,
+        ...result.data
+    };
+
+    jobs.push(createdJob);
+
+    res.status(201).json(createdJob);
+});
+
+// แก้ไขงานตามรหัส
+app.put('/api/jobs/:id', (req, res) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: "รหัสงานไม่ถูกต้อง"
+        });
+    }
+
+    const index = jobs.findIndex((job) => job.id === id);
+
+    if (index === -1) {
+        return res.status(404).json({
+            error: "ไม่พบงานที่ต้องการแก้ไข"
+        });
+    }
+
+    const result = validateJob(req.body || {});
+
+    if (result.error) {
+        return res.status(400).json({
+            error: result.error
+        });
+    }
+
+    jobs[index] = {
+        id,
+        ...result.data
+    };
+
+    res.json(jobs[index]);
+});
+  
+// ลบงานตามรหัส
+app.delete('/api/jobs/:id', (req, res) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: "รหัสงานไม่ถูกต้อง"
+        });
+    }
+
+    const index = jobs.findIndex((job) => job.id === id);
+
+    if (index === -1) {
+        return res.status(404).json({
+            error: "ไม่พบงานที่ต้องการลบ"
+        });
+    }
+
+    const deletedJob = jobs[index];
+    jobs.splice(index, 1);
+
+    res.json({
+        message: "ลบงานสำเร็จ",
+        job: deletedJob
+    });
+});
+
+// จัดการข้อผิดพลาดทั่วไป
+app.use((err, req, res, next) => {
+    if(err instanceof SyntaxError && "body" in err) {
+        return res.status(400).json({
+            error: "ข้อมูล JSON ไม่ถูกต้อง"
+        });
+    }
+
+    console.error(err);
+
+    res.status(500).json({
+        error: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์"
+    });
 });
 
 // เริ่มต้นเซิร์ฟเวอร์
