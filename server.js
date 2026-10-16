@@ -6,6 +6,21 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
+
+app.use((req, res, next) => {
+    const startTime = Date.now();
+
+    res.on('finish', () => {
+        const duration = Date.now() - startTime;
+
+        console.log(
+            `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`
+        );
+    });
+
+    next();
+});
+
 // แปลง JSON ที่ส่งมาจาก Client ให้เป็น JavaScript object
 app.use(express.json({ limit: '10mb' }));
 
@@ -140,7 +155,6 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-
  // ดึงรายการงานและรองรับการค้นหา/กรองผ่าน Query Parameters
 app.get('/api/jobs', (req, res) => {
     const search = String(req.query.search || '')
@@ -233,7 +247,7 @@ app.get('/api/jobs/:id', (req, res) => {
     res.json(job);
 });
 
-// เพิ่มงานใหม่
+
 // เพิ่มงานใหม่
 app.post('/api/jobs', (req, res) => {
     const result = validateJob(req.body || {});
@@ -319,8 +333,18 @@ app.delete('/api/jobs/:id', (req, res) => {
     });
 });
 
+app.use('/api', (req, res) => {
+    return res.status(404).json({
+        error: 'ไม่พบ API endpoint ที่ร้องขอ'
+    });
+});
+
 // จัดการข้อผิดพลาดทั่วไป
 app.use((err, req, res, next) => {
+    if (res.headersSent) {
+        return next(err);
+    }
+
     if(err instanceof SyntaxError && "body" in err) {
         return res.status(400).json({
             error: "ข้อมูล JSON ไม่ถูกต้อง"
