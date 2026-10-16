@@ -140,10 +140,77 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ดึงข้อมูลงานทั้งหมด
+
+ // ดึงรายการงานและรองรับการค้นหา/กรองผ่าน Query Parameters
 app.get('/api/jobs', (req, res) => {
-    res.json(jobs);
+    const search = String(req.query.search || '')
+        .trim()
+        .toLowerCase();
+
+    const category = String(req.query.category || '')
+        .trim()
+        .toLowerCase();
+
+    const minBudget = req.query.minBudget === undefined
+        ? null
+        : Number(req.query.minBudget);
+
+    const maxBudget = req.query.maxBudget === undefined
+        ? null
+        : Number(req.query.maxBudget);
+
+    // ตรวจสอบงบประมาณที่ส่งมา
+    if (
+        (minBudget !== null &&
+            (!Number.isFinite(minBudget) || minBudget < 0)) ||
+        (maxBudget !== null &&
+            (!Number.isFinite(maxBudget) || maxBudget < 0))
+    ) {
+        return res.status(400).json({
+            error: 'งบประมาณต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป'
+        });
+    }
+
+    if (
+        minBudget !== null &&
+        maxBudget !== null &&
+        minBudget > maxBudget
+    ) {
+        return res.status(400).json({
+            error: 'งบประมาณขั้นต่ำต้องไม่มากกว่างบประมาณสูงสุด'
+        });
+    }
+
+    const filteredJobs = jobs.filter((job) => {
+        const matchesSearch =
+            job.title.toLowerCase().includes(search) ||
+            job.category.toLowerCase().includes(search) ||
+            job.location.toLowerCase().includes(search);
+
+        const matchesCategory =
+            category === '' ||
+            category === 'all' ||
+            job.category.toLowerCase() === category;
+
+        const matchesMinBudget =
+            minBudget === null ||
+            job.budget >= minBudget;
+
+        const matchesMaxBudget =
+            maxBudget === null ||
+            job.budget <= maxBudget;
+
+        return (
+            matchesSearch &&
+            matchesCategory &&
+            matchesMinBudget &&
+            matchesMaxBudget
+        );
+    });
+
+    res.status(200).json(filteredJobs);
 });
+
 
 // ดึงข้อมูลงานตามรหัส
 app.get('/api/jobs/:id', (req, res) => {
