@@ -487,6 +487,62 @@ app.post('/api/auth/register', async (req, res, next) => {
     }
 });
 
+// Login
+const jwt = require('jsonwebtoken');
+
+// Middleware สำหรับตรวจสอบ JWT
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    // ต้องส่ง Authorization: Bearer <token>
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+            error: 'กรุณาเข้าสู่ระบบก่อนใช้งาน'
+        });
+    }
+
+    const token = authHeader.slice('Bearer '.length).trim();
+
+    if (!token) {
+        return res.status(401).json({
+            error: 'Token ไม่ถูกต้อง'
+        });
+    }
+
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+        return next(new Error('JWT_SECRET is not configured'));
+    }
+
+    jwt.verify(
+        token,
+        secret,
+        {
+            algorithms: ['HS256'],
+            issuer: 'job_board',
+            audience: 'job_board_frontend'
+        },
+        (error, payload) => {
+            if (error) {
+                return res.status(401).json({
+                    error: 'Token ไม่ถูกต้องหรือหมดอายุ'
+                });
+            }
+
+            if (!payload.sub || !/^[1-9]\d*$/.test(payload.sub)) {
+                return res.status(401).json({
+                    error: 'Token ไม่ถูกต้อง'
+                });
+            }
+
+            req.userId = payload.sub;
+            req.user = payload;
+            return next();
+        }
+    );
+}
+
 app.use('/api', (req, res) => {
     return res.status(404).json({
         error: 'ไม่พบ API endpoint ที่ร้องขอ'
