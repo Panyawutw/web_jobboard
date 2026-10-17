@@ -4,9 +4,11 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
+const bcrypt = require('bcrypt');
+const pool = require('./db');
 const PORT = 3000;
 
-
+// Middleware สำหรับบันทึกเวลาการทำงานของ API
 app.use((req, res, next) => {
     const startTime = Date.now();
 
@@ -155,12 +157,82 @@ app.get('/api/health', (req, res) => {
     });
 });
 
- // ดึงรายการงานและรองรับการค้นหา/กรองผ่าน Query Parameters
+// ตรวจสอบการเชื่อมต่อฐานข้อมูล
+app.get('/api/db-health', async (req, res, next) => {
+    try {
+        const result = await pool.query(`
+            SELECT
+                NOW() AS current_time,
+                current_database() AS database_name
+        `);
+
+        return res.status(200).json({
+            status: 'connected',
+            database: result.rows[0].database_name,
+            currentTime: result.rows[0].current_time
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+// ตรวจสอบโครงสร้างตาราง jobs และทดสอบอ่านข้อมูลจากฐานข้อมูล
+app.get('/api/health/db/structure', async (req, res) => {
+    try {
+
+        // ดึงโครงสร้างคอลัมน์ของตาราง jobs
+        const columnsResult = await pool.query(`
+            SELECT column_name, data_type, is_nullable
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'jobs'
+            ORDER BY ordinal_position;
+        `);
+
+        // ตรวจสอบว่ามีคอลัมน์ที่ต้องการหรือไม่
+        if (columnsResult.rows.length === 0) {
+            return res.status(404).json({
+                status: 'ERROR',
+                message: 'ไม่พบตาราง jobs ในฐานข้อมูล กรุณารัน schema.sql ก่อน'
+            });
+        }
+
+        // ตรวจสอบว่ามีคอลัมน์ที่ API ต้องใช้มีครบถ้วน
+        const requiredColumns = ['id', 'title', 'category', 'budget', 'location', 'description'];
+        const existingColumns = columnsResult.rows.map(col => col.column_name);
+        const missingColumns = requiredColumns.filter(col => !existingColumns.includes(col));
+
+        // ทดสอบอ่านข้อมูลจริงจากฐานข้อมูล
+        const sampleJobsResult = await pool.query(
+            'SELECT id, title, category, budget, location, description FROM jobs ORDER BY id ASC LIMIT 5'
+        );
+
+        return res.status(200).json({
+            status: 'OK',
+            table: 'jobs',
+            columns: columnsResult.rows,
+            columnVerification: {
+                requiredColumns,
+                isComplete: missingColumns.length === 0,
+                missingColumns
+            },
+            sampleCount: sampleJobsResult.rowCount,
+            sampleData: sampleJobsResult.rows
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'ตรวจสอบโครงสร้างฐานข้อมูลล้มเหลว',
+            error: error.message
+        });
+    }
+});
+
+// ดึงรายการงานและรองรับการค้นหา/กรองผ่าน Query Parameters
 app.get('/api/jobs', (req, res) => {
     const search = String(req.query.search || '')
         .trim()
         .toLowerCase();
-
+    
     const category = String(req.query.category || '')
         .trim()
         .toLowerCase();
