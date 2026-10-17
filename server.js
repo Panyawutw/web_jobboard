@@ -266,7 +266,7 @@ app.get('/api/jobs', (req, res) => {
             error: 'งบประมาณขั้นต่ำต้องไม่มากกว่างบประมาณสูงสุด'
         });
     }
-
+    
     const filteredJobs = jobs.filter((job) => {
         const matchesSearch =
             job.title.toLowerCase().includes(search) ||
@@ -403,6 +403,88 @@ app.delete('/api/jobs/:id', (req, res) => {
         message: "ลบงานสำเร็จ",
         job: deletedJob
     });
+});
+
+// สมัครสมาชิก(Register)
+app.post('/api/auth/register', async (req, res, next) => {
+    try {
+        const { name, email, password } = req.body || {};
+
+        //ตรวจสอบชนิดข้อมูล
+        if (
+            typeof name !== 'string' ||
+            typeof email !== 'string' ||
+            typeof password !== 'string'
+        ) {
+            return res.status(400).json({
+                error: 'กรุณากรอกชื่อ อีเมล และรหัสผ่านให้ถูกต้อง'
+            });
+        }
+
+        //ทำความสะอาดข้อมูล
+        const cleanName = name.trim();
+        const cleanEmail = email.trim().toLowerCase();
+
+        //ตรวจสอบชื่อ (ตามขนาด Schema VARCHAR(100))
+        if (cleanName.length < 1 || cleanName.length > 100) {
+            return res.status(400).json({
+                error: 'ชื่อต้องมีความยาว 1–100 ตัวอักษร'
+            });
+        }
+
+        //ตรวจสอบอีเมล (ตามขนาด Schema VARCHAR(255))
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (
+            cleanEmail.length > 255 ||
+            !emailPattern.test(cleanEmail)
+        ) {
+            return res.status(400).json({
+                error: 'รูปแบบอีเมลไม่ถูกต้อง'
+            });
+        }
+
+        //ตรวจสอบรหัสผ่าน (ขั้นต่ำ 8 ตัวอักษร)
+        if (password.length < 8) {
+            return res.status(400).json({
+                error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร'
+            });
+        }
+
+        // bcrypt รองรับรหัสผ่านได้สูงสุด 72 ไบต์
+        if (Buffer.byteLength(password, 'utf8') > 72) {
+            return res.status(400).json({
+                error: 'รหัสผ่านยาวเกินขีดจำกัดที่ระบบรองรับ'
+            });
+        }
+
+        //Hash รหัสผ่านก่อนบันทึก (12 rounds ตามมาตรฐานความปลอดภัย OWASP)
+        const passwordHash = await bcrypt.hash(password, 12);
+
+        //บันทึกลง PostgreSQL ด้วย Parameterized Query เพื่อป้องกัน SQL Injection
+        const result = await pool.query(
+            `INSERT INTO users (name, email, password_hash)
+             VALUES ($1, $2, $3)
+             RETURNING id, name, email, role, created_at`,
+            [cleanName, cleanEmail, passwordHash]
+        );
+
+        //ส่งกลับเฉพาะข้อมูลที่เปิดเผยได้ (ไม่เปิดเผย password_hash)
+        return res.status(201).json({
+            message: 'สมัครสมาชิกสำเร็จ',
+            user: result.rows[0]
+        });
+
+    } catch (error) {
+        // PostgreSQL error code 23505 = unique constraint violation (อีเมลซ้ำ)
+        if (error.code === '23505') {
+            return res.status(409).json({
+                error: 'อีเมลนี้ถูกใช้แล้ว'
+            });
+        }
+
+        // ส่งข้อผิดพลาดอื่นไปยัง Error Handler รวม
+        return next(error);
+    }
 });
 
 app.use('/api', (req, res) => {
