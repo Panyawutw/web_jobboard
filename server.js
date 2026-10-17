@@ -530,7 +530,11 @@ function authenticateToken(req, res, next) {
                 });
             }
 
-            if (!payload.sub || !/^[1-9]\d*$/.test(payload.sub)) {
+            if (
+                !payload.sub ||
+                typeof payload.sub !== 'string' ||
+                !/^[1-9]\d*$/.test(payload.sub)
+            ) {
                 return res.status(401).json({
                     error: 'Token ไม่ถูกต้อง'
                 });
@@ -538,10 +542,125 @@ function authenticateToken(req, res, next) {
 
             req.userId = payload.sub;
             req.user = payload;
+            
             return next();
         }
     );
 }
+
+// POST /api/auth/login
+app.post('/api/auth/login', async (req, res, next) => {
+    try {
+        const { email, password } = req.body || {};
+
+        //ตรวจสอบข้อมูลที่รับเข้ามา
+        if (
+            typeof email !== 'string' ||
+            typeof password !== 'string' ||
+            !email.trim() ||
+            !password
+        ) {
+            return res.status(400).json({
+                error: 'กรุณากรอกอีเมลและรหัสผ่าน'
+            });
+        }
+
+        const cleanEmail = email.trim().toLowerCase();
+
+        if (
+            cleanEmail.length > 255 ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail) ||
+            Buffer.byteLength(password, 'utf8') > 72
+        ) {
+            return res.status(401).json({
+                error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+            });
+        }
+
+        //ค้นหาผู้ใช้ใน PostgreSQL
+        const result = await pool.query(
+            `SELECT id, name, email, password_hash, role
+             FROM users
+             WHERE email = $1`,
+            [cleanEmail]
+        );
+
+        const user = result.rows[0];
+
+        //ตรวจสอบรหัสผ่านด้วย bcrypt
+        // ใช้ข้อความผิดพลาดเดียวกัน ไม่เปิดเผยว่ามีอีเมลนี้หรือไม่
+        if (
+            !user ||
+            !(await bcrypt.compare(password, user.password_hash))
+        ) {
+            return res.status(401).json({
+                error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+            });
+        }
+
+        //ตรวจสอบว่ามี JWT_SECRET ใน .env
+        const secret = process.env.JWT_SECRET;
+
+        if (!secret) {
+            return next(
+                new Error('JWT_SECRET is not configured')
+            );
+        }
+
+        //สร้าง JWT
+        const token = jwt.sign(
+            {
+                role: user.role
+            },
+            secret,
+            {
+                subject: String(user.id),
+                expiresIn: '1h',
+                issuer: 'job_board',
+                audience: 'job_board_frontend'
+            }
+        );
+
+        //ส่ง Token และข้อมูลผู้ใช้ที่เปิดเผยได้
+        return res.status(200).json({
+            message: 'เข้าสู่ระบบสำเร็จ',
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (error) {
+        return next(error);
+    }
+});
+
+// GET /api/auth/me
+app.get('/api/auth/me', authenticateToken, async (req, res, next) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, name, email, role, created_at
+             FROM users
+             WHERE id = $1`,
+            [req.userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({
+                error: 'ไม่พบบัญชีผู้ใช้'
+            });
+        }
+
+        return res.status(200).json({
+            user: result.rows[0]
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
 
 app.use('/api', (req, res) => {
     return res.status(404).json({
