@@ -8,6 +8,45 @@
   </head>
   <body>
 
+
+
+<section id="auth-section">
+    <h2>เข้าสู่ระบบ</h2>
+
+    <form id="login-form">
+        <label for="login-email">อีเมล</label>
+        <input
+            type="email"
+            id="login-email"
+            autocomplete="email"
+            required
+        >
+
+        <label for="login-password">รหัสผ่าน</label>
+        <input
+            type="password"
+            id="login-password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button type="submit" id="login-btn">
+            เข้าสู่ระบบ
+        </button>
+    </form>
+
+    <p id="auth-message" role="status"></p>
+
+    <div id="user-session" hidden>
+        <p id="user-info"></p>
+        <button type="button" id="logout-btn">
+            ออกจากระบบ
+        </button>
+    </div>
+</section>
+
+
+
     <header>
         <h1>FreelanceHub</h1>
         <p style="text-align: center;">แพลตฟอร์มค้นหาและจัดการงานฟรีแลนซ์</p>

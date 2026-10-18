@@ -15,6 +15,17 @@ const budgetInput = document.getElementById("job-budget");
 const locationInput = document.getElementById("job-location"); 
 const descriptionInput = document.getElementById("job-description"); 
 
+// ดึง Element ของฟอร์มและอินพุตสำหรับ Login
+const loginForm = document.getElementById("login-form");
+const loginEmailInput = document.getElementById("login-email");
+const loginPasswordInput = document.getElementById("login-password");
+const loginBtn = document.getElementById("login-btn");
+const authMessage = document.getElementById("auth-message");
+const userSession = document.getElementById("user-session");
+const userInfo = document.getElementById("user-info");
+const logoutBtn = document.getElementById("logout-btn");
+
+// ดึง Element ของปุ่มสำหรับเพิ่มงานใหม่ 
 const formTitle = document.getElementById("form-title");
 const submitBtn = jobForm.querySelector("button[type='submit']");
 const resetFormBtn = document.getElementById("reset-form");
@@ -28,15 +39,24 @@ async function apiRequest(url, options = {}){
 
     let response;
 
+    // เก็บ token ที่ได้จาก login
+    const token = localStorage.getItem("token");
+
+    // สร้าง headers โดยมีเงื่อนไขเพิ่มเติมดังนี้:
+    const headers = {
+        ...(options.body
+            ? {"Content-Type": "application/json"}
+            : {}),
+        ...(token 
+            ? {"Authorization":`Bearer ${token}`}
+            : {}),
+        ...options.headers
+    };
+
     try {
         response = await fetch(url, {
             ...options,
-            headers: {
-                ...(options.body
-                    ? { "Content-Type": "application/json" }
-                    : {}),
-                ...options.headers
-            }
+            headers
         });    
     } catch (error) {
         throw new Error(
@@ -129,6 +149,100 @@ async function loadJobs() {
         showError(error.message);
     }
 }
+
+// ฟังก์ชันสำหรับแสดงข้อมูลผู้ใช้ที่ Login
+function showLoggedInUser(user) {
+    loginForm.hidden = true;
+    userSession.hidden = false;
+
+    // แสดงข้อมูลผู้ใช้
+    userInfo.textContent = 
+    `เข้าสู่ระบบแล้ว: ${user.name} (${user.email})`;
+
+    authMessage.textContent = '';
+}
+
+// ฟังก์ชันสำหรับแสดงข้อมูลผู้ใช้ที่ Login
+function showLoggedOutUser() {
+    loginForm.hidden = false;
+    userSession.hidden = true;
+    userInfo.textContent = '';
+}
+
+// ตรวจสอบข้อมูลผู้ใช้เมื่อกด Login
+loginForm.addEventListener('submit', async(event) => {
+    event.preventDefault();
+
+    const email = loginEmailInput.value.trim();
+    const password = loginPasswordInput.value.trim();
+
+    authMessage.textContent = '';
+    if (loginBtn) loginBtn.disabled = true;
+
+    try {
+        const data = await apiRequest('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({email,password})
+        });
+
+        // ตรวจสอบว่าได้รับ token จากเซิร์ฟเวอร์หรือไม่
+        if (typeof data.token !== 'string' || !data.token) {
+            throw new Error("ไม่ได้รับ token จากเซิร์ฟเวอร์");
+        }
+
+        // 
+        localStorage.setItem('token', data.token);
+        
+        loginPasswordInput.value = '';
+
+        const result = await apiRequest('/api/auth/me');
+
+        showLoggedInUser(result.user);     
+        authMessage.textContent = 'เข้าสู่ระบบเรียบร้อย';
+
+    } catch (error) {
+
+        localStorage.removeItem('token');
+        showLoggedOutUser();
+        authMessage.textContent = error.message;
+
+    } finally {
+        if (loginBtn) loginBtn.disabled = false;
+    }
+});
+
+logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    loginPasswordInput.value = '';
+    
+    showLoggedOutUser();
+    authMessage.textContent = 'ออกจากระบบเรียบร้อยแล้ว';
+});
+
+async function restoreSession(){
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        showLoggedOutUser();
+        return;
+    }
+
+    loginForm.hidden = true;
+    userSession.hidden = false;
+    authMessage.textContent = 'กำลังกู้คืนเซสชัน...';
+
+    try {
+        const result = await apiRequest('/api/auth/me');
+        showLoggedInUser(result.user);
+    } catch (error) {
+        localStorage.removeItem('token');
+        showLoggedOutUser();
+        authMessage.textContent = 
+        'เซสชันหมดอายุ โปรด Login อีกครั้ง';
+    }
+}
+
+restoreSession();
 
 // ฟังก์ชันสำหรับกรองงานตามเงื่อนไขค้นหาและตัวกรอง
 function filterJobs() {
