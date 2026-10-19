@@ -1,12 +1,15 @@
 "use strict";
 
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
-
+const jwt = require('jsonwebtoken');
 const app = express();
+
 const bcrypt = require('bcrypt');
 const pool = require('./db');
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware สำหรับบันทึกเวลาการทำงานของ API
 app.use((req, res, next) => {
@@ -321,7 +324,10 @@ app.get('/api/jobs/:id', (req, res) => {
 
 
 // เพิ่มงานใหม่
-app.post('/api/jobs', (req, res) => {
+app.post('/api/jobs', authenticateToken,
+     requireRole('user', 'client', 'freelancer', 'admin'),
+     (req, res) => {
+    
     const result = validateJob(req.body || {});
 
     if (result.error) {
@@ -345,7 +351,10 @@ app.post('/api/jobs', (req, res) => {
 });
 
 // แก้ไขงานตามรหัส
-app.put('/api/jobs/:id', (req, res) => {
+app.put('/api/jobs/:id', 
+    authenticateToken,
+    requireRole('user', 'client', 'freelancer', 'admin'),
+    (req, res) => {
     const id = Number(req.params.id);
 
     if (!Number.isInteger(id) || id <= 0) {
@@ -379,7 +388,10 @@ app.put('/api/jobs/:id', (req, res) => {
 });
   
 // ลบงานตามรหัส
-app.delete('/api/jobs/:id', (req, res) => {
+app.delete('/api/jobs/:id',
+    authenticateToken,
+    requireRole('user', 'client', 'freelancer', 'admin'),
+    (req, res) => {
     const id = Number(req.params.id);
 
     if (!Number.isInteger(id) || id <= 0) {
@@ -405,19 +417,40 @@ app.delete('/api/jobs/:id', (req, res) => {
     });
 });
 
+app.get(
+    '/api/admin/check',
+    authenticateToken,
+    requireRole('admin'),
+    (req, res) => {
+        return res.json({
+            message: 'Admin access granted',
+            user: req.user
+        });
+    }
+);
+
 // สมัครสมาชิก(Register)
 app.post('/api/auth/register', async (req, res, next) => {
     try {
-        const { name, email, password } = req.body || {};
+        const { name, email, password, role } = req.body || {};
 
         //ตรวจสอบชนิดข้อมูล
         if (
             typeof name !== 'string' ||
             typeof email !== 'string' ||
-            typeof password !== 'string'
+            typeof password !== 'string' ||
+            typeof role !== 'string'
         ) {
             return res.status(400).json({
                 error: 'กรุณากรอกชื่อ อีเมล และรหัสผ่านให้ถูกต้อง'
+            });
+        }
+
+        const allowedRoles = ['freelancer', 'client'];
+
+        if (!allowedRoles.includes(role)) {
+            return res.status(400).json({
+                error: 'ประเภทบัญชีไม่ถูกต้อง'
             });
         }
 
@@ -434,6 +467,7 @@ app.post('/api/auth/register', async (req, res, next) => {
 
         //ตรวจสอบอีเมล (ตามขนาด Schema VARCHAR(255))
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
         if (
             cleanEmail.length > 255 ||
             !emailPattern.test(cleanEmail)
@@ -462,10 +496,10 @@ app.post('/api/auth/register', async (req, res, next) => {
 
         //บันทึกลง PostgreSQL ด้วย Parameterized Query เพื่อป้องกัน SQL Injection
         const result = await pool.query(
-            `INSERT INTO users (name, email, password_hash)
-             VALUES ($1, $2, $3)
+            `INSERT INTO users(name, email, password_hash, role)
+             VALUES ($1, $2, $3, $4)
              RETURNING id, name, email, role, created_at`,
-            [cleanName, cleanEmail, passwordHash]
+            [cleanName, cleanEmail, passwordHash, role]
         );
 
         //ส่งกลับเฉพาะข้อมูลที่เปิดเผยได้ (ไม่เปิดเผย password_hash)
@@ -487,66 +521,110 @@ app.post('/api/auth/register', async (req, res, next) => {
     }
 });
 
-// Login
-const jwt = require('jsonwebtoken');
-
-// Middleware สำหรับตรวจสอบ JWT
-function authenticateToken(req, res, next) {
+// ตรวจสอบ Token
+async function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization;
-
-    // ต้องส่ง Authorization: Bearer <token>
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({
-            error: 'กรุณาเข้าสู่ระบบก่อนใช้งาน'
-        });
-    }
-
-    const token = authHeader.slice('Bearer '.length).trim();
-
+    const token = authHeader?.startsWith('Bearer ')
+        ? authHeader.slice(7).trim()
+        : null;
+    
     if (!token) {
         return res.status(401).json({
-            error: 'Token ไม่ถูกต้อง'
+            error: 'กรุณา Login เพื่อเข้าสู่ระบบ'
         });
     }
 
     const secret = process.env.JWT_SECRET;
 
     if (!secret) {
-        return next(new Error('JWT_SECRET is not configured'));
+        console.error('JWT_SECRET is not set in .env file');
+        return res.status(500).json({
+            error: 'Server configuration error'
+        });
     }
 
-    jwt.verify(
-        token,
-        secret,
-        {
+    try {
+        const payload = jwt.verify(token, secret, {
             algorithms: ['HS256'],
             issuer: 'job_board',
             audience: 'job_board_frontend'
-        },
-        (error, payload) => {
-            if (error) {
-                return res.status(401).json({
-                    error: 'Token ไม่ถูกต้องหรือหมดอายุ'
-                });
-            }
+        });
 
-            if (
-                !payload.sub ||
-                typeof payload.sub !== 'string' ||
-                !/^[1-9]\d*$/.test(payload.sub)
-            ) {
-                return res.status(401).json({
-                    error: 'Token ไม่ถูกต้อง'
-                });
-            }
-
-            req.userId = payload.sub;
-            req.user = payload;
-            
-            return next();
+        if (
+            !payload ||
+            typeof payload.sub !== 'string' ||
+            !/^[1-9]\d*$/.test(payload.sub) 
+        ) {
+            return res.status(401).json({
+                error: 'Token ไม่ถูกต้อง'
+            });
         }
-    );
+
+        const result = await pool.query(
+            `SELECT id, name, email, role
+             FROM users
+             WHERE id = $1`,
+            [payload.sub]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({
+                error: 'ไม่พบบัญชีผู้ใช้'
+            });
+        }
+
+        const user = result.rows[0];
+
+        if (!['user', 'admin', 'client', 'freelancer', 'employer'].includes(user.role)) {
+            return res.status(403).json({
+                error: 'ไม่ได้รับอนุญาตให้เข้าถึง'
+            });
+        }
+
+        req.userId = String(user.id);
+        req.user = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        };
+
+        next();
+    } catch (error) {
+        if (
+            error.name === 'TokenExpiredError' ||
+            error.name === 'JsonWebTokenError' ||
+            error.name === 'NotBeforeError' 
+        ) {
+            return res.status(401).json({
+                error: 'Token ไม่ถูกต้องหรือหมดอายุ'
+            });
+        }
+        console.error('Authentication error:', error);
+        return res.status(500).json({
+            error: 'เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้'
+        });
+    }
 }
+    
+function requireRole(...allowedRoles){
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({
+                error: 'กรุณาเข้าสู่ระบบ'
+            });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({
+                error: 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้'
+            });
+        }
+
+        next();
+    }
+}
+
 
 // POST /api/auth/login
 app.post('/api/auth/login', async (req, res, next) => {
@@ -609,15 +687,14 @@ app.post('/api/auth/login', async (req, res, next) => {
 
         //สร้าง JWT
         const token = jwt.sign(
-            {
-                role: user.role
-            },
-            secret,
+            { role: user.role},
+            process.env.JWT_SECRET,
             {
                 subject: String(user.id),
                 expiresIn: '1h',
                 issuer: 'job_board',
-                audience: 'job_board_frontend'
+                audience: 'job_board_frontend',
+                algorithm: 'HS256'
             }
         );
 
