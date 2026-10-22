@@ -1,88 +1,172 @@
 "use strict";
 
-const registerForm = document.getElementById("register-form");
-const registerMessage = document.getElementById("register-message");
-const registerButton = document.getElementById("register-btn");
+/**
+ * จัดการระบบยืนยันตัวตน (Authentication)
+ * รองรับ: เข้าสู่ระบบ (Login), ออกจากระบบ (Logout), กู้คืนเซสชัน (Restore Session), และสมัครสมาชิก (Register)
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    // ดึง Elements สำหรับ Login & Session
+    const loginForm = document.getElementById("login-form");
+    const loginEmailInput = document.getElementById("login-email");
+    const loginPasswordInput = document.getElementById("login-password");
+    const loginBtn = document.getElementById("login-btn");
+    const authMessage = document.getElementById("auth-message");
+    const userSession = document.getElementById("user-session");
+    const userInfo = document.getElementById("user-info");
+    const logoutBtn = document.getElementById("logout-btn");
 
-const loginForm = document.getElementById("login-form");
-const loginMessage = document.getElementById("auth-message");
-const loginButton = document.getElementById("login-btn");
+    // ดึง Elements สำหรับ Register
+    const registerForm = document.getElementById("register-form");
+    const registerNameInput = document.getElementById("register-name");
+    const registerEmailInput = document.getElementById("register-email");
+    const registerPasswordInput = document.getElementById("register-password");
+    const registerRoleSelect = document.getElementById("register-role");
+    const registerBtn = document.getElementById("register-btn");
+    const registerMessage = document.getElementById("register-message");
 
-async function submitAuthRequest(url, payload) {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    });
-
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-        throw new Error(result.error || `เกิดข้อผิดพลาด HTTP ${response.status}`);
+    // ฟังก์ชันแสดงสถานะเมื่อเข้าสู่ระบบแล้ว
+    function showLoggedInUser(user) {
+        if (loginForm) loginForm.hidden = true;
+        if (userSession) userSession.hidden = false;
+        if (userInfo) userInfo.textContent = `เข้าสู่ระบบแล้ว: ${user.name} (${user.email}) [${user.role}]`;
+        if (authMessage) authMessage.textContent = '';
     }
 
-    return result;
-}
+    // ฟังก์ชันแสดงสถานะเมื่อออกจากระบบ
+    function showLoggedOutUser() {
+        if (loginForm) loginForm.hidden = false;
+        if (userSession) userSession.hidden = true;
+        if (userInfo) userInfo.textContent = '';
+    }
 
-if (registerForm) {
-    registerForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
+    // จัดการการส่งฟอร์ม Login
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-        const name = document.getElementById("register-name").value.trim();
-        const email = document.getElementById("register-email").value.trim();
-        const password = document.getElementById("register-password").value;
-        const role = document.getElementById("register-role").value;
+            const email = loginEmailInput.value.trim();
+            const password = loginPasswordInput.value.trim();
 
-        registerMessage.textContent = "";
-        registerMessage.setAttribute("role", "status");
-        registerButton.disabled = true;
+            if (authMessage) authMessage.textContent = '';
+            if (loginBtn) loginBtn.disabled = true;
 
-        try {
-            const result = await submitAuthRequest("/api/auth/register", {
-                name,
-                email,
-                password,
-                role
-            });
+            try {
+                const data = await apiRequest('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
 
-            registerMessage.textContent = `${result.message || "สมัครสมาชิกสำเร็จ"} เข้าสู่ระบบได้จากหน้า Login`;
-            registerForm.reset();
-        } catch (error) {
-            registerMessage.textContent = error.message || "สมัครสมาชิกไม่สำเร็จ กรุณาลองอีกครั้ง";
-            registerMessage.setAttribute("role", "alert");
-        } finally {
-            registerButton.disabled = false;
-        }
-    });
-}
+                if (typeof data.token !== 'string' || !data.token) {
+                    throw new Error("ไม่ได้รับ Token จากเซิร์ฟเวอร์");
+                }
 
-if (loginForm) {
-    loginForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
+                localStorage.setItem('token', data.token);
+                loginPasswordInput.value = '';
 
-        const email = document.getElementById("login-email").value.trim();
-        const password = document.getElementById("login-password").value;
+                const meResult = await apiRequest('/api/auth/me');
+                showLoggedInUser(meResult.user);
 
-        loginMessage.textContent = "";
-        loginMessage.setAttribute("role", "status");
-        loginButton.disabled = true;
+                if (authMessage) {
+                    authMessage.textContent = 'เข้าสู่ระบบเรียบร้อยแล้ว';
+                    authMessage.style.color = 'green';
+                }
 
-        try {
-            const result = await submitAuthRequest("/api/auth/login", { email, password });
+                // ถ้าอยู่ในหน้า /login ให้กลับหน้าแรกหลังจากล็อกอิน
+                if (window.location.pathname === '/login') {
+                    setTimeout(() => { window.location.href = '/'; }, 1000);
+                }
 
-            if (!result.token) {
-                throw new Error("ไม่ได้รับ Token จากเซิร์ฟเวอร์");
+            } catch (error) {
+                localStorage.removeItem('token');
+                showLoggedOutUser();
+                if (authMessage) {
+                    authMessage.textContent = error.message;
+                    authMessage.style.color = 'red';
+                }
+            } finally {
+                if (loginBtn) loginBtn.disabled = false;
             }
+        });
+    }
 
-            localStorage.setItem("token", result.token);
-            loginMessage.textContent = "เข้าสู่ระบบเรียบร้อย กำลังไปยังหน้าหลัก...";
-            window.location.assign("/");
-        } catch (error) {
-            localStorage.removeItem("token");
-            loginMessage.textContent = error.message || "เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง";
-            loginMessage.setAttribute("role", "alert");
-        } finally {
-            loginButton.disabled = false;
+    // จัดการปุ่ม Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            if (loginPasswordInput) loginPasswordInput.value = '';
+            showLoggedOutUser();
+            if (authMessage) {
+                authMessage.textContent = 'ออกจากระบบเรียบร้อยแล้ว';
+                authMessage.style.color = 'inherit';
+            }
+        });
+    }
+
+    // กู้คืน Session เดิมจาก Token เมื่อโหลดหน้าเว็บ
+    async function restoreSession() {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            showLoggedOutUser();
+            return;
         }
-    });
-}
+
+        if (loginForm) loginForm.hidden = true;
+        if (userSession) userSession.hidden = false;
+        if (authMessage) authMessage.textContent = 'กำลังกู้คืนเซสชัน...';
+
+        try {
+            const meResult = await apiRequest('/api/auth/me');
+            showLoggedInUser(meResult.user);
+        } catch (error) {
+            localStorage.removeItem('token');
+            showLoggedOutUser();
+            if (authMessage) {
+                authMessage.textContent = 'เซสชันหมดอายุ โปรดเข้าสู่ระบบใหม่อีกครั้ง';
+                authMessage.style.color = 'red';
+            }
+        }
+    }
+
+    // จัดการการส่งฟอร์ม Register (ถ้ามีฟอร์มในหน้านั้น)
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const name = registerNameInput.value.trim();
+            const email = registerEmailInput.value.trim();
+            const password = registerPasswordInput.value;
+            const role = registerRoleSelect ? registerRoleSelect.value : 'freelancer';
+
+            if (registerMessage) registerMessage.textContent = '';
+            if (registerBtn) registerBtn.disabled = true;
+
+            try {
+                await apiRequest('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, email, password, role })
+                });
+
+                if (registerMessage) {
+                    registerMessage.textContent = 'สมัครสมาชิกสำเร็จ! กำลังนำท่านไปหน้าเข้าสู่ระบบ...';
+                    registerMessage.style.color = 'green';
+                }
+
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1500);
+
+            } catch (error) {
+                if (registerMessage) {
+                    registerMessage.textContent = error.message;
+                    registerMessage.style.color = 'red';
+                }
+            } finally {
+                if (registerBtn) registerBtn.disabled = false;
+            }
+        });
+    }
+
+    // เรียกกู้คืน session ทันทีที่เปิดหน้า
+    restoreSession();
+});
