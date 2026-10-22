@@ -1,0 +1,35 @@
+<header class="navbar">
+    <div class="nav-container">
+        <!-- Logo -->
+        <a href="/" class="nav-logo">Freelance<span class="logo-accent">Hub</span></a>
+
+        <!-- ปุ่มแฮมเบอร์เกอร์สำหรับหน้าจอมือถือ -->
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation">
+            <span class="hamburger"></span>
+        </button>
+
+        <!-- แถบเมนูนำทาง -->
+        <div class="nav-wrapper" id="navWrapper">
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link">ค้นหางาน</a></li>
+                <li><a href="/#job-form-section" class="nav-link">เพิ่มงานใหม่</a></li>
+                <li><a href="/history" class="nav-link">ประวัติการทำงาน</a></li>
+            </ul>
+
+            <div class="nav-right">
+                <!-- ข้อมูลผู้ใช้เมื่อเข้าสู่ระบบแล้ว -->
+                <div id="user-session" hidden style="display: flex; align-items: center; gap: 12px;">
+                    <span class="text-muted">ยินดีต้อนรับ:</span>
+                    <span id="user-info" class="text-bold"></span>
+                </div>
+
+                <!-- ลิงก์เข้าสู่ระบบ / สมัครสมาชิก เมื่อยังไม่ล็อกอิน -->
+                <div id="auth-links" style="display: flex; align-items: center; gap: 16px;">
+                    <a href="/login" class="nav-link text-bold">เข้าสู่ระบบ</a>
+                    <span class="divider"></span>
+                    <a href="/register" class="btn-register">สมัครสมาชิก</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
