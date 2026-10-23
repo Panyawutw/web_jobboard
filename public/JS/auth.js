@@ -1,9 +1,7 @@
 "use strict";
 
-/**
- * จัดการระบบยืนยันตัวตน (Authentication)
- * รองรับ: เข้าสู่ระบบ (Login), ออกจากระบบ (Logout), กู้คืนเซสชัน (Restore Session), และสมัครสมาชิก (Register)
- */
+// จัดการระบบยืนยันตัวตน (Authentication)
+// รองรับ: เข้าสู่ระบบ (Login), ออกจากระบบ (Logout), กู้คืนเซสชัน (Restore Session), และสมัครสมาชิก (Register)
 document.addEventListener("DOMContentLoaded", () => {
     // ดึง Elements สำหรับ Login & Session
     const loginForm = document.getElementById("login-form");
@@ -14,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const userSession = document.getElementById("user-session");
     const userInfo = document.getElementById("user-info");
     const logoutBtn = document.getElementById("logout-btn");
+    const authLinks = document.getElementById("auth-links");
 
     // ดึง Elements สำหรับ Register
     const registerForm = document.getElementById("register-form");
@@ -28,7 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function showLoggedInUser(user) {
         if (loginForm) loginForm.hidden = true;
         if (userSession) userSession.hidden = false;
-        if (userInfo) userInfo.textContent = `เข้าสู่ระบบแล้ว: ${user.name} (${user.email}) [${user.role}]`;
+        if (authLinks) authLinks.hidden = true;
+        if (userInfo) userInfo.textContent = `${user.name} (${user.role})`;
         if (authMessage) authMessage.textContent = '';
     }
 
@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function showLoggedOutUser() {
         if (loginForm) loginForm.hidden = false;
         if (userSession) userSession.hidden = true;
+        if (authLinks) authLinks.hidden = false;
         if (userInfo) userInfo.textContent = '';
     }
 

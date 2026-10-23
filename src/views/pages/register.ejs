@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f2ee">
+    <title>สมัครสมาชิก | ก้าว</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/register.css?v=8">
+  </head>
+
+  <body>
+    <%- include('../partials/navbar') %>
+    <main class="page">
+      <!-- หน้าซ้ายเปลี่ยนข้อความและภาพตาม Role ที่เลือก -->
+      <section
+        class="register-card <%= role === 'company' ? 'company-mode' : '' %>"
+        aria-labelledby="title"
+      >
+        <div class="card-aside">
+          <div class="aside-top">
+            <span class="aside-kicker">
+              <%= role === 'company' ? 'FOR EMPLOYERS & TEAMS' : 'YOUR NEXT CHAPTER' %>
+            </span>
+            <span class="aside-line"></span>
+          </div>
+
+          <h1>
+            <% if (role === 'company') { %>
+              ทีมที่ใช่<br>เริ่มจากคนที่ใช่
+            <% } else { %>
+              โอกาสใหม่<br>เริ่มต้นที่นี่
+            <% } %>
+          </h1>
+
+          <p>
+            <%= role === 'company'
+              ? 'ค้นหาคนทำงานที่เหมาะกับธุรกิจ และสร้างทีมที่พร้อมเติบโตไปด้วยกัน'
+              : 'พื้นที่สำหรับคนทำงานที่กำลังมองหาก้าวต่อไปในเส้นทางอาชีพ' %>
+          </p>
+
+          <img
+            class="illustration"
+            src="<%= role === 'company'
+              ? '/images/photo-1521737711867-e3b97375f902.avif'
+              : '/images/photo-1498050108023-c5249f4df085.avif' %>"
+            alt="<%= role === 'company'
+              ? 'ทีมบริษัทกำลังทำงานร่วมกัน'
+              : 'ผู้สมัครกำลังทำงานกับคอมพิวเตอร์' %>"
+            fetchpriority="high"
+          >
+
+          <div class="aside-points">
+            <% if (role === 'company') { %>
+              <div>
+                <span class="point-icon">✓</span>
+                <span>
+                  <b>พบผู้สมัครที่ตรงใจ</b>
+                  <small>เชื่อมต่อกับคนเก่งจากหลากหลายสายงาน</small>
+                </span>
+              </div>
+              <div>
+                <span class="point-icon">↗</span>
+                <span>
+                  <b>สร้างทีมที่เติบโตได้</b>
+                  <small>เริ่มต้นหาคนสำคัญให้ธุรกิจของคุณ</small>
+                </span>
+              </div>
+            <% } else { %>
+              <div>
+                <span class="point-icon">✓</span>
+                <span>
+                  <b>โอกาสที่ตรงกับคุณ</b>
+                  <small>เชื่อมต่อกับงานและบริษัทที่ใช่</small>
+                </span>
+              </div>
+              <div>
+                <span class="point-icon">↗</span>
+                <span>
+                  <b>เติบโตไปอีกขั้น</b>
+                  <small>ทุกก้าวสำคัญ เริ่มจากการลงมือ</small>
+                </span>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="aside-foot">A better career starts with one step.</div>
+        </div>
+
+        <div class="card-main">
+          <div class="form-heading">
+            <h2 id="title">
+              <%= role === 'company' ? 'สมัครบัญชีบริษัท' : 'สมัครสมาชิก' %>
+            </h2>
+            <p>กรอกข้อมูลเพื่อเริ่มต้นใช้งานก้าว</p>
+          </div>
+
+          <% if (errors.form) { %>
+            <div class="alert error" role="alert"><%= errors.form %></div>
+          <% } %>
+
+          <% if (success) { %>
+            <div class="alert success" role="status"><%= success %></div>
+          <% } %>
+
+          <div class="role-switch" role="tablist" aria-label="เลือกประเภทบัญชี">
+            <a
+              role="tab"
+              aria-selected="<%= role === 'jobSeeker' %>"
+              class="role-option <%= role === 'jobSeeker' ? 'active' : '' %>"
+              data-role-switch
+              href="/register?role=jobSeeker"
+            >
+              <span class="role-symbol">♙</span>
+              <span>ผู้สมัครงาน</span>
+            </a>
+            <a
+              role="tab"
+              aria-selected="<%= role === 'company' %>"
+              class="role-option <%= role === 'company' ? 'active' : '' %>"
+              data-role-switch
+              href="/register?role=company"
+            >
+              <span class="role-symbol">▦</span>
+              <span>บริษัท</span>
+            </a>
+          </div>
+
+          <!-- แสดงชุดช่องกรอกที่ตรงกับประเภทบัญชี -->
+          <form action="/register" method="post" id="register-form" novalidate>
+            <input type="hidden" name="role" value="<%= role %>">
+
+            <% if (role === 'company') { %>
+              <!-- ข้อมูลบัญชีของบริษัท -->
+              <div class="section-title">ข้อมูลบัญชี</div>
+              <div class="fields two-col">
+                <div class="field">
+                  <label for="username">ชื่อผู้ใช้ <em>*</em></label>
+                  <input
+                    id="username"
+                    name="username"
+                    value="<%= values.username || '' %>"
+                    placeholder="ชื่อผู้ใช้"
+                    required
+                    autocomplete="username"
+                  >
+                  <% if (errors.username) { %>
+                    <small class="field-error"><%= errors.username %></small>
+                  <% } %>
+                </div>
+
+                <div class="field">
+                  <label for="accountEmail">อีเมลบัญชี <em>*</em></label>
+                  <input
+                    id="accountEmail"
+                    name="accountEmail"
+                    type="email"
+                    value="<%= values.accountEmail || '' %>"
+                    placeholder="you@company.com"
+                    required
+                    autocomplete="email"
+                  >
+                  <% if (errors.accountEmail) { %>
+                    <small class="field-error"><%= errors.accountEmail %></small>
+                  <% } %>
+                </div>
+
+                <%- include('../partials/password-field', {
+                  fieldId: 'password',
+                  label: 'รหัสผ่าน',
+                  placeholder: 'อย่างน้อย 8 ตัวอักษร',
+                  minLength: 8,
+                  error: errors.password
+                }) %>
+                <%- include('../partials/password-field', {
+                  fieldId: 'confirmPassword',
+                  label: 'ยืนยันรหัสผ่าน',
+                  placeholder: 'กรอกรหัสผ่านอีกครั้ง',
+                  error: errors.confirmPassword
+                }) %>
+              </div>
+
+              <div class="section-title contact-title">ข้อมูลบริษัทและผู้ติดต่อ</div>
+              <div class="fields two-col">
+                <div class="field">
+                  <label for="companyName">ชื่อบริษัท <em>*</em></label>
+                  <input
+                    id="companyName"
+                    name="companyName"
+                    value="<%= values.companyName || '' %>"
+                    placeholder="ชื่อบริษัท"
+                    required
+                  >
+                  <% if (errors.companyName) { %>
+                    <small class="field-error"><%= errors.companyName %></small>
+                  <% } %>
+                </div>
+
+                <div class="field">
+                  <label for="businessType">ลักษณะธุรกิจ <em>*</em></label>
+                  <select id="businessType" name="businessType" required>
+                    <option value="">เลือกลักษณะธุรกิจ</option>
+                    <% const businessTypes = [
+                      'เทคโนโลยี',
+                      'การเงินและการธนาคาร',
+                      'การตลาดและสื่อ',
+                      'การศึกษา',
+                      'สุขภาพ',
+                      'ค้าปลีกและบริการ',
+                      'การผลิต',
+                      'อื่น ๆ'
+                    ]; %>
+                    <% businessTypes.forEach((item) => { %>
+                      <option
+                        value="<%= item %>"
+                        <%= values.businessType === item ? 'selected' : '' %>
+                      ><%= item %></option>
+                    <% }) %>
+                  </select>
+                  <% if (errors.businessType) { %>
+                    <small class="field-error"><%= errors.businessType %></small>
+                  <% } %>
+                </div>
+
+                <div class="field">
+                  <label for="contactName">ชื่อผู้ติดต่อ <em>*</em></label>
+                  <input
+                    id="contactName"
+                    name="contactName"
+                    value="<%= values.contactName || '' %>"
+                    placeholder="ชื่อ-นามสกุล"
+                    required
+                  >
+                  <% if (errors.contactName) { %>
+                    <small class="field-error"><%= errors.contactName %></small>
+                  <% } %>
+                </div>
+
+                <div class="field">
+                  <label for="phone">เบอร์โทร <em>*</em></label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value="<%= values.phone || '' %>"
+                    placeholder="08X XXX XXXX"
+                    required
+                    autocomplete="tel"
+                  >
+                  <% if (errors.phone) { %>
+                    <small class="field-error"><%= errors.phone %></small>
+                  <% } %>
+                </div>
+
+                <div class="field full">
+                  <label for="contactEmail">อีเมลติดต่อ <em>*</em></label>
+                  <input
+                    id="contactEmail"
+                    name="contactEmail"
+                    type="email"
+                    value="<%= values.contactEmail || '' %>"
+                    placeholder="contact@company.com"
+                    required
+                  >
+                  <% if (errors.contactEmail) { %>
+                    <small class="field-error"><%= errors.contactEmail %></small>
+                  <% } %>
+                </div>
+              </div>
+            <% } else { %>
+              <!-- ข้อมูลส่วนตัวของผู้สมัครงาน -->
+              <div class="section-title">ข้อมูลส่วนตัว</div>
+              <div class="fields two-col">
+                <div class="field">
+                  <label for="firstName">ชื่อ <em>*</em></label>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    value="<%= values.firstName || '' %>"
+                    placeholder="ชื่อจริง"
+                    required
+                    autocomplete="given-name"
+                  >
+                  <% if (errors.firstName) { %>
+                    <small class="field-error"><%= errors.firstName %></small>
+                  <% } %>
+                </div>
+
+                <div class="field">
+                  <label for="lastName">นามสกุล <em>*</em></label>
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    value="<%= values.lastName || '' %>"
+                    placeholder="นามสกุล"
+                    required
+                    autocomplete="family-name"
+                  >
+                  <% if (errors.lastName) { %>
+                    <small class="field-error"><%= errors.lastName %></small>
+                  <% } %>
+                </div>
+
+                <div class="field full">
+                  <label for="email">อีเมล <em>*</em></label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value="<%= values.email || '' %>"
+                    placeholder="you@example.com"
+                    required
+                    autocomplete="email"
+                  >
+                  <% if (errors.email) { %>
+                    <small class="field-error"><%= errors.email %></small>
+                  <% } %>
+                </div>
+
+                <%- include('../partials/password-field', {
+                  fieldId: 'password',
+                  label: 'รหัสผ่าน',
+                  placeholder: 'อย่างน้อย 8 ตัวอักษร',
+                  minLength: 8,
+                  error: errors.password
+                }) %>
+                <%- include('../partials/password-field', {
+                  fieldId: 'confirmPassword',
+                  label: 'ยืนยันรหัสผ่าน',
+                  placeholder: 'กรอกรหัสผ่านอีกครั้ง',
+                  error: errors.confirmPassword
+                }) %>
+              </div>
+            <% } %>
+
+            <label class="terms">
+              <input
+                type="checkbox"
+                name="termsAccepted"
+                value="yes"
+                required
+                <%= values.termsAccepted ? 'checked' : '' %>
+              >
+              <span>ฉันยอมรับ<a href="#terms"> เงื่อนไขการใช้บริการ</a>และ<a href="#privacy">นโยบายความเป็นส่วนตัว</a></span>
+            </label>
+
+            <% if (errors.termsAccepted) { %>
+              <small class="field-error terms-error"><%= errors.termsAccepted %></small>
+            <% } %>
+
+            <button class="submit-button" type="submit">
+              <span class="submit-icon" aria-hidden="true"><%= role === 'company' ? '▦' : '♙' %></span>สมัครสมาชิกสำหรับ<%= role === 'company' ? 'บริษัท' : 'ผู้สมัครงาน' %>
+            </button>
+          </form>
+
+          <div class="divider"><span>หรือลงทะเบียนด้วย</span></div>
+
+          <div class="oauth-row">
+            <a class="oauth" href="/auth/google?from=register">
+              <span class="google-g">G</span>Google
+            </a>
+            <a class="oauth" href="/auth/github?from=register">
+              <%- include('../partials/github-icon') %>GitHub
+            </a>
+          </div>
+
+          <p class="login-prompt" id="login">
+            เป็นสมาชิกอยู่แล้ว? <a href="/login">เข้าสู่ระบบ</a>
+          </p>
+          <p class="security-note">
+            <span>▣</span> ข้อมูลของคุณจะถูกจัดเก็บอย่างปลอดภัย
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/JS/navbar.js" defer></script>
+    <script src="/js/register.js" defer></script>
+  </body>
+</html>

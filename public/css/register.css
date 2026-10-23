@@ -1,0 +1,679 @@
+:root {
+  --blue: #174a7a;
+  --accent: #bd5b16;
+  --accent-hover: #9d480d;
+  --ink: #191919;
+  --muted: #666;
+  --line: #d9e0e7;
+  --canvas: #f4f2ee;
+  --green: #057642;
+  --red: #c62828;
+  --shadow: 0 3px 12px rgba(20,35,50,.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font: 400 14px/1.45 "Source Sans 3",sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -12px;
+  z-index: -1;
+  background: url("/images/commute-background.jpg") center/cover no-repeat;
+  filter: blur(5px);
+  opacity: .88;
+  transform: scale(1.02);
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* การ์ดหลักและแผงภาพประกอบที่เปลี่ยนตามประเภทบัญชี */
+.page {
+  max-width: 1128px;
+  margin: 40px auto 30px;
+  padding: 0 20px;
+}
+
+.register-card {
+  display: grid;
+  grid-template-columns: minmax(310px,.85fr) minmax(500px,1.15fr);
+  min-height: 650px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  animation: arrive .55s cubic-bezier(.2,.75,.25,1) both;
+}
+
+.card-aside {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 38px 32px 25px;
+  background: #f8f7f4;
+  border-right: 1px solid var(--line);
+}
+
+.aside-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aside-kicker {
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.aside-line {
+  width: 28px;
+  height: 1px;
+  background: var(--blue);
+}
+
+.company-mode .aside-kicker, .company-mode .point-icon {
+  color: var(--green);
+}
+
+.company-mode .aside-line {
+  background: var(--green);
+}
+
+.card-aside h1 {
+  margin: 22px 0 8px;
+  color: #172b42;
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -.3px;
+}
+
+.card-aside>p {
+  max-width: 280px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.illustration {
+  display: block;
+  width: 100%;
+  height: 218px;
+  margin: 25px 0 20px;
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(25,25,25,.12);
+}
+
+.aside-points {
+  display: grid;
+  gap: 15px;
+}
+
+.aside-points>div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.point-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: white;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.aside-points b, .aside-points small {
+  display: block;
+}
+
+.aside-points b {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.aside-points small {
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.aside-foot {
+  margin-top: auto;
+  padding-top: 20px;
+  color: #858585;
+  font-size: 11px;
+  letter-spacing: .2px;
+}
+
+/* ฟอร์มสมัครสมาชิกและปุ่มสลับประเภทบัญชี */
+.card-main {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 38px 42px 25px;
+}
+
+.card-main:before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg,#174a7a,#23677f 70%,#27815f);
+  content: "";
+}
+
+.form-heading {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.form-heading h2 {
+  margin: 0 0 4px;
+  color: var(--red);
+  font-size: 28px;
+  letter-spacing: -.3px;
+}
+
+.form-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.alert {
+  margin: 13px 0;
+  padding: 9px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.alert.error {
+  border: 1px solid #f2c7c4;
+  background: #fff2f1;
+  color: #cc1016;
+}
+
+.alert.success {
+  border: 1px solid #c8e4d0;
+  background: #edf7f0;
+  color: var(--green);
+}
+
+.role-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 15px 0 14px;
+  padding: 3px;
+  border: 1px solid #e0e6ed;
+  border-radius: 999px;
+  background: #edf1f5;
+}
+
+.role-option {
+  display: flex;
+  height: 35px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  color: #425366;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background .18s,color .18s,transform .18s;
+}
+
+.role-option:hover {
+  background: #e8edf1;
+  text-decoration: none;
+}
+
+.role-option.active {
+  background: #fff;
+  color: var(--blue);
+  box-shadow: 0 1px 4px #1919191a;
+  animation: role-arrive .22s ease-out;
+}
+
+.role-symbol {
+  font-size: 15px;
+}
+
+/* ช่องกรอกข้อมูล ปุ่มแสดงรหัสผ่าน และข้อความแจ้งข้อผิดพลาด */
+.section-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contact-title {
+  margin-top: 12px;
+}
+
+.fields {
+  display: grid;
+  gap: 9px 12px;
+}
+
+.two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.field {
+  min-width: 0;
+}
+
+.field.full {
+  grid-column: 1/-1;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.field label em {
+  color: #cc1016;
+  font-style: normal;
+}
+
+.field input, .field select {
+  width: 100%;
+  height: 38px;
+  outline: 0;
+  border: 1px solid #d3dbe3;
+  border-radius: 9px;
+  background: #fff;
+  padding: 0 11px;
+  color: var(--ink);
+  font: 400 13px "Source Sans 3",sans-serif;
+  transition: border-color .18s,box-shadow .18s;
+}
+
+.field input::placeholder {
+  color: #96999b;
+}
+
+.field input:focus, .field select:focus {
+  border-color: #477ba8;
+  box-shadow: 0 0 0 3px #174a7a1f;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 44px;
+  padding-left: 38px;
+}
+
+.password-lock {
+  position: absolute;
+  top: 10px;
+  left: 11px;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: #657b8e;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #617588;
+  cursor: pointer;
+  transition: transform .18s,color .18s;
+}
+
+.toggle-password:hover {
+  transform: scale(1.12);
+  color: var(--blue);
+}
+
+.toggle-password svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.eye-closed {
+  display: none;
+}
+
+.toggle-password.is-visible .eye-open {
+  display: none;
+}
+
+.toggle-password.is-visible .eye-closed {
+  display: block;
+}
+
+.field-error {
+  display: block;
+  margin-top: 3px;
+  color: #cc1016;
+  font-size: 11px;
+}
+
+.terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 0 12px;
+  color: #505050;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.terms input {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  place-items: center;
+  appearance: none;
+  margin: 0;
+  border: 1.5px solid #86888a;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.terms input:checked {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.terms input:checked:after {
+  color: #fff;
+  font-size: 13px;
+  content: "✓";
+}
+
+.terms-error {
+  margin: -8px 0 8px 26px;
+}
+
+/* ปุ่มสมัครสมาชิกและปุ่มเข้าสู่ระบบผ่านผู้ให้บริการอื่น */
+.submit-button {
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 3px 0 #6c300a2e;
+  color: #fff;
+  font: 600 15px "Source Sans 3",sans-serif;
+  cursor: pointer;
+  transition: transform .18s,box-shadow .18s,background .18s;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  background: var(--accent-hover);
+  box-shadow: 0 7px 16px #9d480d38;
+}
+
+.submit-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px #6c300a2e;
+}
+
+.submit-icon {
+  margin-right: 8px;
+  font-size: 15px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 13px 0 9px;
+  color: #777;
+  font-size: 11px;
+}
+
+.divider:before, .divider:after {
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+  content: "";
+}
+
+.oauth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.oauth {
+  display: flex;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #f4f4f4;
+  border-radius: 999px;
+  background: #f4f4f4;
+  color: #191919;
+  font-size: 12px;
+  font-weight: 600;
+  transition: transform .18s,box-shadow .18s,background .18s;
+}
+
+.oauth:hover {
+  transform: translateY(-1px);
+  background: #e9eef3;
+  box-shadow: 0 4px 10px #174a7a17;
+  text-decoration: none;
+}
+
+.google-g {
+  color: #4285f4;
+  font: bold 16px Arial,sans-serif;
+}
+
+.github-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: #191919;
+}
+
+.login-prompt {
+  margin: 19px 0 0;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.login-prompt a {
+  font-weight: 600;
+}
+
+.security-note {
+  margin: 17px 0 0;
+  color: #858585;
+  font-size: 11px;
+  text-align: center;
+}
+
+.security-note span {
+  color: var(--blue);
+}
+
+/* แอนิเมชันและการจัดหน้าให้เหมาะกับจอขนาดต่าง ๆ */
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes role-arrive {
+  from {
+    transform: scale(.97);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (max-width:900px) {
+  .page {
+    margin-top: 24px;
+  }
+  .register-card {
+    grid-template-columns: minmax(240px,.72fr) minmax(450px,1.28fr);
+  }
+  .card-aside {
+    padding: 30px 23px;
+  }
+  .card-main {
+    padding: 32px 28px 25px;
+  }
+  .illustration {
+    height: 190px;
+  }
+  .card-aside h1 {
+    font-size: 29px;
+  }
+}
+
+@media (max-width:720px) {
+  .page {
+    margin: 16px auto;
+    padding: 0 14px;
+  }
+  .register-card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .card-aside {
+    padding: 22px 23px 18px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .card-aside h1 {
+    margin: 12px 0 5px;
+    font-size: 25px;
+  }
+  .card-aside>p {
+    max-width: none;
+  }
+  .illustration {
+    height: 165px;
+    margin: 15px 0;
+  }
+  .aside-points {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .aside-points small {
+    font-size: 10px;
+  }
+  .aside-foot {
+    display: none;
+  }
+  .card-main {
+    padding: 31px 23px 24px;
+  }
+}
+
+@media (max-width:430px) {
+  .two-col {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .field.full {
+    grid-column: auto;
+  }
+  .card-main, .card-aside {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+  .card-aside {
+    padding-top: 20px;
+    padding-bottom: 16px;
+  }
+  .illustration {
+    height: 150px;
+  }
+  .aside-points {
+    grid-template-columns: 1fr;
+  }
+  .aside-points>div:nth-child(2) {
+    display: none;
+  }
+  .form-heading h2 {
+    font-size: 25px;
+  }
+  .oauth {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .register-card, .role-option.active {
+    animation: none;
+  }
+  .role-option, .field input, .field select, .toggle-password, .submit-button, .oauth {
+    transition: none;
+  }
+}

@@ -170,6 +170,12 @@ async function login(req, res, next) {
 // ขอข้อมูลผู้ใช้ (GET /api/auth/me)
 async function getMe(req, res, next) {
     try {
+        if (req.user) {
+            return res.status(200).json({
+                user: req.user
+            });
+        }
+
         const user = await userModel.findUserById(req.userId);
 
         if (!user) {

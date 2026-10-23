@@ -1,8 +1,6 @@
 "use strict";
 
-/**
- * จัดการการเปิด-ปิดเมนู Navbar สำหรับหน้าจอมือถือ (Responsive Navbar)
- */
+// จัดการการเปิด-ปิดเมนู Navbar สำหรับหน้าจอมือถือ (Responsive Navbar)
 document.addEventListener("DOMContentLoaded", () => {
     const navToggle = document.getElementById('navToggle');
     const navWrapper = document.getElementById('navWrapper');

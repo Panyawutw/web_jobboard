@@ -1,0 +1,236 @@
+:root {
+  --primary-color: #0F172A;  
+  --accent-color: #4577ec;   
+  --text-main: #1E293B;      
+  --text-muted: #64748B;     
+  --border-color: #E2E8F0;   
+  --bg-white: #FFFFFF;
+}
+
+/* Navbar Base Style */
+.navbar {
+  background-color: var(--bg-white, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  position: relative;
+  z-index: 1000;
+  font-family: 'Kanit', Helvetica, sans-serif;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo */
+.nav-logo {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary-color, #0f172a);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+.nav-logo:hover {
+  text-decoration: none;
+}
+
+.logo-accent {
+  color: var(--accent-color, #4577ec);
+}
+
+.nav-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  margin-left: 40px;
+}
+
+/* Menu Center */
+.nav-menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 32px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text-muted, #64748b);
+  font-size: 15px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  position: relative;
+  padding: 8px 0;
+}
+
+.nav-link:hover {
+  color: var(--primary-color, #0f172a);
+  text-decoration: none;
+}
+
+.nav-link.active {
+  color: var(--text-main, #1e293b);
+  font-weight: 500;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--text-main, #1e293b);
+  border-radius: 2px;
+}
+
+/* Right Section */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-right .text-muted {
+  color: var(--text-muted, #64748b);
+  font-size: 14px;
+}
+
+.nav-right .text-bold {
+  color: var(--text-main, #1e293b);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.nav-right .divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--border-color, #e2e8f0);
+}
+
+.btn-register {
+  text-decoration: none;
+  color: var(--text-main, #1e293b);
+  border: 1px solid var(--border-color, #e2e8f0);
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 400;
+  background-color: var(--bg-white, #ffffff);
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-register:hover {
+  border-color: var(--accent-color, #4577ec);
+  color: var(--accent-color, #4577ec);
+  text-decoration: none;
+}
+
+/* Hamburger Toggle Icon */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.hamburger {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-main, #1e293b);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.hamburger::before,
+.hamburger::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-main, #1e293b);
+  transition: all 0.3s ease;
+}
+
+.hamburger::before { top: -7px; }
+.hamburger::after { bottom: -7px; }
+
+/* Responsive Settings */
+@media (max-width: 992px) {
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-wrapper {
+    position: absolute;
+    top: 72px;
+    left: 0;
+    width: 100%;
+    background-color: var(--bg-white, #ffffff);
+    flex-direction: column;
+    align-items: stretch;
+    margin-left: 0;
+    padding: 20px 24px 30px 24px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+    display: none;
+  }
+
+  .nav-wrapper.show {
+    display: flex;
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .nav-link.active::after {
+    display: none;
+  }
+
+  .nav-right {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  .nav-right .divider {
+    display: none;
+  }
+
+  .btn-register {
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  .nav-toggle.open .hamburger {
+    background-color: transparent;
+  }
+
+  .nav-toggle.open .hamburger::before {
+    transform: rotate(45deg);
+    top: 0;
+  }
+
+  .nav-toggle.open .hamburger::after {
+    transform: rotate(-45deg);
+    bottom: 0;
+  }
+}

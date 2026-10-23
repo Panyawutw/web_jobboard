@@ -66,48 +66,38 @@ let jobs = [
         location: "ภูเก็ต",
         description: "ดูแลระบบและกระบวนการ Deploy"
     }
-]; 
+];
 
 // ฟังก์ชันตรวจสอบความถูกต้องของข้อมูลงาน
 function validateJob(body) {
-    // ตรวจสอบว่าข้อมูลที่ส่งมามีชนิดเป็น string และไม่ว่างเปล่า
-    const title = typeof body.title === 'string'
-        ? body.title.trim()
-        : '';
-    const category = typeof body.category === 'string'
-        ? body.category.trim()
-        : '';
-    const location = typeof body.location === 'string'
-        ? body.location.trim()
-        : '';
-        const description = typeof body.description === 'string'
-        ? body.description.trim()
-        : '';
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    const category = typeof body.category === 'string' ? body.category.trim() : '';
+    const location = typeof body.location === 'string' ? body.location.trim() : '';
+    const description = typeof body.description === 'string' ? body.description.trim() : '';
 
-        // ตรวจสอบว่าข้อมูลที่จำเป็นถูกกรอกครบถ้วน
-        if (!title || !category || !location || !description) {
-            return {
-                error: "กรุณากรอกข้อมูลให้ครบถ้วน"
-            };
-        }
-        
-        if (
-            body.budget === "" ||
-            body.budget === null ||
-            body.budget === undefined 
-        ) {
-            return {
-                error: "กรุณากรอกงบประมาณ"
-            };
-        }
-            
-        const budget = Number(body.budget);
+    if (!title || !category || !location || !description) {
+        return {
+            error: "กรุณากรอกข้อมูลให้ครบถ้วน"
+        };
+    }
 
-        if (!Number.isInteger(budget) || budget <= 0) {
-            return {
-                error: "งบประมาณต้องเป็นตัวเลขที่มากกว่า 0"
-            };
-        }
+    if (
+        body.budget === "" ||
+        body.budget === null ||
+        body.budget === undefined
+    ) {
+        return {
+            error: "กรุณากรอกงบประมาณ"
+        };
+    }
+
+    const budget = Number(body.budget);
+
+    if (!Number.isInteger(budget) || budget <= 0) {
+        return {
+            error: "งบประมาณต้องเป็นตัวเลขที่มากกว่า 0"
+        };
+    }
 
     return {
         data: {
@@ -120,9 +110,8 @@ function validateJob(body) {
     };
 }
 
-// ดึงรายการงานและรองรับการค้นหา/กรองผ่าน Query Parameters
-function getAllJobs ({search = '',category = '',minBudget = null,maxBudget = null} = {}) {
-    
+// ดึงรายการงานตามเงื่อนไขค้นหา/กรอง
+function getAllJobs({ search = '', category = '', minBudget = null, maxBudget = null } = {}) {
     return jobs.filter((job) => {
         const matchesSearch =
             job.title.toLowerCase().includes(search) ||
@@ -135,12 +124,10 @@ function getAllJobs ({search = '',category = '',minBudget = null,maxBudget = nul
             job.category.toLowerCase() === category;
 
         const matchesMinBudget =
-            minBudget === null ||
-            job.budget >= minBudget;
+            minBudget === null || job.budget >= minBudget;
 
         const matchesMaxBudget =
-            maxBudget === null ||
-            job.budget <= maxBudget;
+            maxBudget === null || job.budget <= maxBudget;
 
         return (
             matchesSearch &&
@@ -151,12 +138,12 @@ function getAllJobs ({search = '',category = '',minBudget = null,maxBudget = nul
     });
 }
 
-// ฟังก์ชัน ดึงข้อมูลงานตามรหัส
+// ดึงข้อมูลงานตาม ID
 function getJobById(id) {
     return jobs.find(job => job.id === id) || null;
 }
 
-// ฟังก์ชัน สร้างงานใหม่
+// เพิ่มงานใหม่
 function createJob(jobData) {
     const nextId = jobs.reduce(
         (maxId, job) => Math.max(maxId, (job && job.id) ? job.id : 0), 0
@@ -171,8 +158,38 @@ function createJob(jobData) {
     return newJob;
 }
 
+// แก้ไขงานตาม ID
+function updateJob(id, jobData) {
+    const index = jobs.findIndex(job => job.id === id);
+    if (index === -1) {
+        return null;
+    }
+
+    jobs[index] = {
+        id,
+        ...jobData
+    };
+
+    return jobs[index];
+}
+
+// ลบงานตาม ID
+function deleteJob(id) {
+    const index = jobs.findIndex(job => job.id === id);
+    if (index === -1) {
+        return null;
+    }
+
+    const deleted = jobs[index];
+    jobs.splice(index, 1);
+    return deleted;
+}
+
 module.exports = {
     validateJob,
     getAllJobs,
-    createJob
+    getJobById,
+    createJob,
+    updateJob,
+    deleteJob
 };

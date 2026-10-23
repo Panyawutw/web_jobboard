@@ -1,9 +1,7 @@
 "use strict";
 
-/**
- * ฟังก์ชันกลางสำหรับเรียกใช้งาน API ของระบบ
- * รองรับการส่ง JSON, แนบ Authorization Token อัตโนมัติ และจัดการ Error
- */
+// ฟังก์ชันกลางสำหรับเรียกใช้งาน API ของระบบ
+// รองรับการส่ง JSON, แนบ Authorization Token อัตโนมัติ และจัดการ Error
 async function apiRequest(url, options = {}) {
     let response;
     const token = localStorage.getItem("token");
@@ -32,10 +30,8 @@ async function apiRequest(url, options = {}) {
     return data;
 }
 
-/**
- * ฟังก์ชันสำหรับป้องกัน Cross Site Scripting (XSS)
- * แปลงอักขระพิเศษเป็น HTML Entities ก่อนนำไปแสดงผล
- */
+// ฟังก์ชันสำหรับป้องกัน Cross Site Scripting (XSS)
+// แปลงอักขระพิเศษเป็น HTML Entities ก่อนนำไปแสดงผล
 function escapeHTML(value) {
     const entities = {
         '&': '&amp;',

@@ -1,9 +1,7 @@
 "use strict";
 
-/**
- * จัดการระบบงาน (Jobs Management)
- * รองรับ: โหลดรายการงาน, ค้นหา/กรอง, ดูรายละเอียด, เพิ่มงาน, แก้ไขงาน, และลบงาน
- */
+// จัดการระบบงาน (Jobs Management)
+// รองรับ: โหลดรายการงาน, ค้นหา/กรอง, ดูรายละเอียด, เพิ่มงาน, แก้ไขงาน, และลบงาน
 document.addEventListener("DOMContentLoaded", () => {
     // ดึง Elements สำหรับรายการงานและตัวกรอง
     const searchInput = document.getElementById("search-input");
