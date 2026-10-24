@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const registerController = require('../controllers/registerController');
 const webAuthController = require('../controllers/webAuthController');
 const oauthController = require('../controllers/oauthController');
+const firebaseAuthController = require('../controllers/firebaseAuthController');
 const passwordResetController = require('../controllers/passwordResetController');
 
 const router = express.Router();
@@ -43,6 +44,7 @@ router.post('/login', webAuthController.login);
 router.post('/logout', webAuthController.logout);
 
 // 3. เส้นทางส่งตรงไปยังระบบล็อกอินของ Google และ GitHub
+router.post('/auth/firebase-login', firebaseAuthController.firebaseLogin);
 router.get('/auth/google', oauthController.googleAuth);
 router.get('/auth/google/callback', oauthController.googleCallback);
 router.get('/auth/github', oauthController.githubAuth);
