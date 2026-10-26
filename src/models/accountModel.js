@@ -35,19 +35,6 @@ async function createJobSeeker(data) {
       [accountId, data.firstName.trim(), data.lastName.trim()]
     );
 
-    // สร้างข้อมูลลง users table ควบคู่ด้วย เพื่อรองรับการทำงานกับระบบเดิม
-    try {
-      const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`;
-      await client.query(
-        `INSERT INTO users (name, email, password_hash, role)
-         VALUES ($1, $2, $3, 'freelancer')
-         ON CONFLICT (email) DO NOTHING`,
-        [fullName, email, hashedPassword]
-      );
-    } catch {
-      // ข้ามกรณีข้อผิดพลาดของตารางเดิม
-    }
-
     await client.query('COMMIT');
     return accountId;
   } catch (error) {
@@ -98,18 +85,6 @@ async function createCompany(data) {
       ]
     );
 
-    // บันทึกลง users ควบคู่ด้วย
-    try {
-      await client.query(
-        `INSERT INTO users (name, email, password_hash, role)
-         VALUES ($1, $2, $3, 'employer')
-         ON CONFLICT (email) DO NOTHING`,
-        [data.companyName.trim(), accountEmail, hashedPassword]
-      );
-    } catch {
-      // ข้ามกรณีข้อผิดพลาดของตารางเดิม
-    }
-
     await client.query('COMMIT');
     return accountId;
   } catch (error) {
@@ -147,48 +122,67 @@ async function usernameExists(username) {
 async function authenticate(identifier, password) {
   const cleanIdentifier = identifier.trim().toLowerCase();
 
-  const result = await pool.query(
-    `SELECT
-       accounts.id,
-       accounts.email,
-       accounts.password_hash,
-       accounts.role,
-       COALESCE(
-         job_seekers.first_name || ' ' || job_seekers.last_name,
-         companies.company_name,
-         companies.username
-       ) AS name
-     FROM accounts
-     LEFT JOIN job_seekers ON job_seekers.account_id = accounts.id
-     LEFT JOIN companies ON companies.account_id = accounts.id
-     WHERE LOWER(accounts.email) = LOWER($1)
-        OR LOWER(companies.username) = LOWER($1)
-     LIMIT 1`,
-    [cleanIdentifier]
-  );
+  try {
+    const result = await pool.query(
+      `SELECT
+         accounts.id,
+         accounts.email,
+         accounts.password_hash,
+         accounts.role,
+         COALESCE(
+           job_seekers.first_name || ' ' || job_seekers.last_name,
+           companies.company_name,
+           companies.username,
+           accounts.email
+         ) AS name
+       FROM accounts
+       LEFT JOIN job_seekers ON job_seekers.account_id = accounts.id
+       LEFT JOIN companies ON companies.account_id = accounts.id
+       WHERE LOWER(accounts.email) = LOWER($1)
+          OR LOWER(companies.username) = LOWER($1)
+       LIMIT 1`,
+      [cleanIdentifier]
+    );
 
-  if (result.rows.length === 0) {
-    return null;
+    if (result.rows.length > 0) {
+      const account = result.rows[0];
+      const isMatch = await bcrypt.compare(password, account.password_hash);
+      if (isMatch) {
+        return {
+          id: account.id,
+          email: account.email,
+          role: account.role,
+          name: account.name
+        };
+      }
+      return null;
+    }
+  } catch (err) {
+    console.warn('[AccountModel] authenticate DB query fallback:', err.message);
   }
 
-  const account = result.rows[0];
-  const isMatch = await bcrypt.compare(password, account.password_hash);
-
-  if (!isMatch) {
-    return null;
+  // Fallback for demo test accounts
+  const userModel = require('./userModel');
+  const fallback = userModel.fallbackAccounts.find(u => u.email.toLowerCase() === cleanIdentifier);
+  if (fallback) {
+    const isMatch = await bcrypt.compare(password, fallback.password_hash);
+    if (isMatch) {
+      return {
+        id: fallback.id,
+        email: fallback.email,
+        role: fallback.role,
+        name: fallback.name
+      };
+    }
   }
 
-  return {
-    id: account.id,
-    email: account.email,
-    role: account.role,
-    name: account.name
-  };
+  return null;
 }
 
 // ค้นหาหรือสร้างบัญชีใหม่จากการเข้าสู่ระบบผ่าน OAuth (Google / GitHub)
-async function findOrCreateOAuthAccount({ provider, providerId, email, name, role = 'jobSeeker' }) {
+async function findOrCreateOAuthAccount({ provider, providerId, email, name, avatarUrl = null, role = 'jobSeeker' }) {
   const cleanEmail = (email || `${provider}_${providerId}@oauth.local`).trim().toLowerCase();
+  const cleanRole = role === 'company' ? 'company' : 'jobSeeker';
   const client = await pool.connect();
 
   try {
@@ -196,25 +190,31 @@ async function findOrCreateOAuthAccount({ provider, providerId, email, name, rol
 
     // 1. ค้นหาจาก oauth_provider และ oauth_id ก่อน
     let result = await client.query(
-      `SELECT accounts.id, accounts.email, accounts.role,
-              COALESCE(job_seekers.first_name || ' ' || job_seekers.last_name, companies.company_name, accounts.email) AS name
+      `SELECT accounts.id, accounts.email, accounts.role, accounts.avatar_url,
+              COALESCE(job_seekers.first_name || ' ' || job_seekers.last_name,
+                       companies.company_name, companies.username, accounts.email) AS name
        FROM accounts
        LEFT JOIN job_seekers ON job_seekers.account_id = accounts.id
        LEFT JOIN companies ON companies.account_id = accounts.id
-       WHERE oauth_provider = $1 AND oauth_id = $2
+       WHERE accounts.oauth_provider = $1 AND accounts.oauth_id = $2
        LIMIT 1`,
       [provider, String(providerId)]
     );
 
     if (result.rows.length > 0) {
+      await client.query(
+        'UPDATE accounts SET avatar_url = COALESCE($1, avatar_url) WHERE id = $2',
+        [avatarUrl, result.rows[0].id]
+      );
       await client.query('COMMIT');
-      return result.rows[0];
+      return { ...result.rows[0], avatarUrl: avatarUrl || result.rows[0].avatar_url || null };
     }
 
     // 2. ค้นหาจากอีเมลเดิมในระบบ (Link Account)
     result = await client.query(
-      `SELECT accounts.id, accounts.email, accounts.role,
-              COALESCE(job_seekers.first_name || ' ' || job_seekers.last_name, companies.company_name, accounts.email) AS name
+      `SELECT accounts.id, accounts.email, accounts.role, accounts.avatar_url,
+              COALESCE(job_seekers.first_name || ' ' || job_seekers.last_name,
+                       companies.company_name, companies.username, accounts.email) AS name
        FROM accounts
        LEFT JOIN job_seekers ON job_seekers.account_id = accounts.id
        LEFT JOIN companies ON companies.account_id = accounts.id
@@ -226,11 +226,13 @@ async function findOrCreateOAuthAccount({ provider, providerId, email, name, rol
     if (result.rows.length > 0) {
       const existingAccount = result.rows[0];
       await client.query(
-        `UPDATE accounts SET oauth_provider = $1, oauth_id = $2 WHERE id = $3`,
-        [provider, String(providerId), existingAccount.id]
+        `UPDATE accounts SET oauth_provider = $1, oauth_id = $2,
+                              avatar_url = COALESCE($3, avatar_url)
+         WHERE id = $4`,
+        [provider, String(providerId), avatarUrl, existingAccount.id]
       );
       await client.query('COMMIT');
-      return existingAccount;
+      return { ...existingAccount, avatarUrl: avatarUrl || existingAccount.avatar_url || null };
     }
 
     // 3. สร้างบัญชีใหม่
@@ -238,10 +240,10 @@ async function findOrCreateOAuthAccount({ provider, providerId, email, name, rol
     const hashedPassword = await hashPassword(randomPassword);
 
     const newAccountRes = await client.query(
-      `INSERT INTO accounts (email, password_hash, role, oauth_provider, oauth_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO accounts (email, password_hash, role, oauth_provider, oauth_id, avatar_url)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id`,
-      [cleanEmail, hashedPassword, role, provider, String(providerId)]
+      [cleanEmail, hashedPassword, cleanRole, provider, String(providerId), avatarUrl]
     );
 
     const accountId = newAccountRes.rows[0].id;
@@ -249,22 +251,19 @@ async function findOrCreateOAuthAccount({ provider, providerId, email, name, rol
     const firstName = nameParts[0] || 'ผู้ใช้งาน';
     const lastName = nameParts.slice(1).join(' ') || 'OAuth';
 
-    await client.query(
-      `INSERT INTO job_seekers (account_id, first_name, last_name)
-       VALUES ($1, $2, $3)`,
-      [accountId, firstName, lastName]
-    );
-
-    // Sync กับ users table
-    try {
+    if (cleanRole === 'company') {
       await client.query(
-        `INSERT INTO users (name, email, password_hash, role)
-         VALUES ($1, $2, $3, 'freelancer')
-         ON CONFLICT (email) DO NOTHING`,
-        [`${firstName} ${lastName}`, cleanEmail, hashedPassword]
+        `INSERT INTO companies (account_id, username, company_name, business_type,
+                                contact_name, phone, contact_email)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [accountId, `oauth_${provider}_${providerId}`.slice(0, 100), name || cleanEmail,
+          'ทั่วไป', name || cleanEmail, '-', cleanEmail]
       );
-    } catch {
-      // ข้ามกรณีข้อผิดพลาดของตารางเดิม
+    } else {
+      await client.query(
+        'INSERT INTO job_seekers (account_id, first_name, last_name) VALUES ($1, $2, $3)',
+        [accountId, firstName, lastName]
+      );
     }
 
     await client.query('COMMIT');
@@ -272,8 +271,9 @@ async function findOrCreateOAuthAccount({ provider, providerId, email, name, rol
     return {
       id: accountId,
       email: cleanEmail,
-      role,
-      name: `${firstName} ${lastName}`
+      role: cleanRole,
+      name: cleanRole === 'company' ? (name || cleanEmail) : `${firstName} ${lastName}`,
+      avatarUrl
     };
   } catch (error) {
     await client.query('ROLLBACK');

@@ -3,24 +3,24 @@
     <h2 id="form-title">เพิ่มงานใหม่</h2>
 
     <form id="job-form">
-        <label for="job-title">ชื่องาน</label>
-        <input type="text" id="job-title" placeholder="กรอกชื่องาน" required>
+        <label for="job-title" class="form-label">ชื่องาน</label>
+        <input type="text" id="job-title" placeholder="กรอกชื่องาน" required class="form-control">
 
-        <label for="job-category">หมวดหมู่</label>
-        <input type="text" id="job-category" placeholder="เช่น Web Development" required>
+        <label for="job-category" class="form-label">หมวดหมู่</label>
+        <input type="text" id="job-category" placeholder="เช่น Web Development" required class="form-control">
 
-        <label for="job-budget">งบประมาณ (บาท)</label>
-        <input type="number" id="job-budget" min="1" step="any" placeholder="กรอกงบประมาณ" required>
+        <label for="job-budget" class="form-label">งบประมาณ (บาท)</label>
+        <input type="number" id="job-budget" min="1" step="any" placeholder="กรอกงบประมาณ" required class="form-control">
 
-        <label for="job-location">สถานที่ทำงาน</label>
-        <input type="text" id="job-location" placeholder="เช่น Remote หรือ Bangkok" required>
+        <label for="job-location" class="form-label">สถานที่ทำงาน</label>
+        <input type="text" id="job-location" placeholder="เช่น Remote หรือ Bangkok" required class="form-control">
 
-        <label for="job-description">รายละเอียดงาน</label>
-        <textarea id="job-description" placeholder="อธิบายรายละเอียดของงาน" required></textarea>
+        <label for="job-description" class="form-label">รายละเอียดงาน</label>
+        <textarea id="job-description" placeholder="อธิบายรายละเอียดของงาน" required class="form-control"></textarea>
 
         <div class="form-actions">
-            <button type="submit">เพิ่มงาน</button>
-            <button type="reset" id="reset-form">ล้างฟอร์ม</button>
+            <button type="submit" class="btn btn-primary">เพิ่มงาน</button>
+            <button type="reset" id="reset-form" class="btn">ล้างฟอร์ม</button>
         </div>
     </form>
 </section>

@@ -1,7 +1,7 @@
 :root {
   --blue: #174a7a;
-  --accent: #bd5b16;
-  --accent-hover: #9d480d;
+  --accent: #0A66C2;
+  --accent-hover: #004E99;
   --ink: #191919;
   --muted: #666;
   --line: #d9e0e7;
@@ -189,7 +189,7 @@ a:hover {
   right: 0;
   left: 0;
   height: 4px;
-  background: linear-gradient(90deg,#174a7a,#23677f 70%,#27815f);
+  background: linear-gradient(90deg,#174a7a,#0A66C2 70%,#004E99);
   content: "";
 }
 
@@ -200,7 +200,7 @@ a:hover {
 
 .form-heading h2 {
   margin: 0 0 4px;
-  color: var(--red);
+  color: var(--blue);
   font-size: 28px;
   letter-spacing: -.3px;
 }
@@ -450,7 +450,7 @@ a:hover {
   border: 0;
   border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 3px 0 #6c300a2e;
+  box-shadow: 0 3px 0 #0a66c226;
   color: #fff;
   font: 600 15px "Source Sans 3",sans-serif;
   cursor: pointer;
@@ -460,12 +460,12 @@ a:hover {
 .submit-button:hover {
   transform: translateY(-2px);
   background: var(--accent-hover);
-  box-shadow: 0 7px 16px #9d480d38;
+  box-shadow: 0 7px 16px #004E9938;
 }
 
 .submit-button:active {
   transform: translateY(0);
-  box-shadow: 0 1px 3px #6c300a2e;
+  box-shadow: 0 1px 3px #0a66c226;
 }
 
 .submit-icon {

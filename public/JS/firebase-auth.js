@@ -47,7 +47,6 @@ async function loginWithFirebase(providerName, targetRole = 'jobSeeker') {
     alert('ระบบ Firebase ยังไม่พร้อมใช้งาน กรุณารีเฟรชหน้าเว็บอีกครั้ง');
     return;
   }
-
   const provider = providerName === 'google' ? googleProvider : githubProvider;
 
   try {
@@ -80,7 +79,7 @@ async function loginWithFirebase(providerName, targetRole = 'jobSeeker') {
     }
   } catch (error) {
     console.error('// [FRONTEND] Firebase Auth Error:', error);
-    if (error.code === 'auth/popup-closed-by-user') {
+    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
       // ผู้ใช้กดยกเลิกหรือปิด Popup เอง ไม่ต้องแจ้งเตือนข้อผิดพลาด
       return;
     }
@@ -94,26 +93,18 @@ async function loginWithFirebase(providerName, targetRole = 'jobSeeker') {
 
 // 4. ผูกการทำงานเข้ากับปุ่ม Google และ GitHub บนหน้าจออัตโนมัติ
 document.addEventListener('DOMContentLoaded', () => {
-  // ตรวจสอบว่าอยู่ในหน้าสมัครสมาชิกสำหรับบริษัทหรือไม่
-  const isCompanyRegister = window.location.search.includes('role=company');
-  const userRole = isCompanyRegister ? 'company' : 'jobSeeker';
+  // ใช้ event delegation เพราะ role switcher เปลี่ยนปุ่มใน DOM โดยไม่ reload หน้า
+  document.addEventListener('click', (event) => {
+    const googleButton = event.target.closest('a[href*="/auth/google"], .btn-google');
+    const githubButton = event.target.closest('a[href*="/auth/github"], .btn-github');
+    const button = googleButton || githubButton;
+    if (!button) return;
 
-  // ค้นหาปุ่ม Google (ทั้งในหน้า Login และ Register)
-  const googleButtons = document.querySelectorAll('a[href*="/auth/google"], .btn-google');
-  googleButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      loginWithFirebase('google', userRole);
-    });
-  });
-
-  // ค้นหาปุ่ม GitHub (ทั้งในหน้า Login และ Register)
-  const githubButtons = document.querySelectorAll('a[href*="/auth/github"], .btn-github');
-  githubButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      loginWithFirebase('github', userRole);
-    });
+    event.preventDefault();
+    const selectedRole = document.querySelector('#register-form input[name="role"]')?.value;
+    const queryRole = new URLSearchParams(window.location.search).get('role');
+    const userRole = selectedRole || (queryRole === 'company' ? 'company' : 'jobSeeker');
+    loginWithFirebase(googleButton ? 'google' : 'github', userRole);
   });
 
   // ผูกการทำงานเมื่อกดปุ่ม "ออกจากระบบ" ให้ Sign Out ออกจาก Firebase ด้วย

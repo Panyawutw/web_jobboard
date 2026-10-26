@@ -1,7 +1,7 @@
 :root {
   --blue: #174a7a;
-  --accent: #bd5b16;
-  --accent-hover: #9d480d;
+  --accent: #0A66C2;
+  --accent-hover: #004E99;
   --canvas: #f4f2ee;
   --ink: #191919;
   --muted: #666;
@@ -67,7 +67,7 @@ a:hover {
 
 .login-card h1 {
   margin: 9px 0 4px;
-  color: var(--red);
+  color: var(--blue);
   font-size: 28px;
   letter-spacing: -.3px;
   text-align: left;
@@ -278,7 +278,7 @@ a:hover {
   border: 0;
   border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 3px 0 #6c300a2e;
+  box-shadow: 0 3px 0 #0a66c226;
   color: #fff;
   font: 700 15px "Source Sans 3",sans-serif;
   cursor: pointer;
@@ -288,12 +288,12 @@ a:hover {
 .login-button:hover {
   transform: translateY(-2px);
   background: var(--accent-hover);
-  box-shadow: 0 7px 16px #9d480d38;
+  box-shadow: 0 7px 16px #004E9938;
 }
 
 .login-button:active {
   transform: translateY(0);
-  box-shadow: 0 1px 3px #6c300a2e;
+  box-shadow: 0 1px 3px #0a66c226;
 }
 
 .login-button span {

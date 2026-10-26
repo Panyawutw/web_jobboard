@@ -1,0 +1,146 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1000px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="margin-bottom: 20px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B;">🛡️ จัดการบทบาทผู้ใช้งาน (Roles Management)</h1>
+            <p style="color: #64748B; margin-top: 4px;">สร้างบทบาทใหม่ และกำหนดความรับผิดชอบ (มีระบบป้องกันการลบ Role ที่ยังมีผู้ใช้งาน)</p>
+        </div>
+        <a href="/admin/acl" style="background: #7C3AED; color: white; padding: 9px 16px; border-radius: 6px; text-decoration: none; font-weight: 600;" class="btn btn-outline-secondary">
+            🔑 กำหนดสิทธิ์ Matrix
+        </a>
+    </div>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <!-- Create Role Form -->
+    <div style="background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="margin-top: 0; color: #1E293B;">➕ เพิ่มบทบาทใหม่ (Dynamic Role Creation)</h3>
+        <form id="create-role-form">
+            <div style="grid-template-columns: 1fr 2fr auto; align-items: end;" class="d-grid gap-3">
+                <div>
+                    <label style="font-weight: 500; font-size: 13px;" class="form-label">ชื่อ Role *</label>
+                    <input type="text" id="role-name" required placeholder="เช่น Auditor, Supervisor" style="margin-bottom: 0;" class="form-control">
+                </div>
+                <div>
+                    <label style="font-weight: 500; font-size: 13px;" class="form-label">คำอธิบาย</label>
+                    <input type="text" id="role-desc" placeholder="เช่น ผู้ตรวจสอบเอกสารทางการเงิน" style="margin-bottom: 0;" class="form-control">
+                </div>
+                <button type="submit" style="background: #059669; color: white; padding: 10px 18px; margin: 0;" class="btn btn-primary">
+                    บันทึก Role
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Roles Table -->
+    <section style="padding: 0; overflow: hidden; border: 1px solid #E2E8F0;">
+        <div style="overflow-x: auto;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;" class="table align-middle">
+                <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
+                        <th style="padding: 12px 16px;">ID</th>
+                        <th style="padding: 12px 16px;">ชื่อบทบาท (Role)</th>
+                        <th style="padding: 12px 16px;">คำอธิบาย</th>
+                        <th style="padding: 12px 16px; text-align: center;">จำนวนผู้ใช้</th>
+                        <th style="padding: 12px 16px; text-align: center;">ประเภท</th>
+                        <th style="padding: 12px 16px; text-align: right;">การจัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% roles.forEach(function(r) { %>
+                        <tr style="border-bottom: 1px solid #E2E8F0;" id="role-row-<%= r.id %>">
+                            <td style="padding: 12px 16px; color: #64748B;"><%= r.id %></td>
+                            <td style="padding: 12px 16px; font-weight: 700; color: #0F172A;"><%= r.name %></td>
+                            <td style="padding: 12px 16px; color: #475569;"><%= r.description || '-' %></td>
+                            <td style="padding: 12px 16px; text-align: center;">
+                                <span style="background: #F1F5F9; padding: 2px 8px; border-radius: 9999px; font-weight: 600;">
+                                    <%= r.user_count || 0 %> คน
+                                </span>
+                            </td>
+                            <td style="padding: 12px 16px; text-align: center;">
+                                <% if (r.is_system) { %>
+                                    <span style="color: #64748B; font-size: 12px;">System Core</span>
+                                <% } else { %>
+                                    <span style="color: #059669; font-size: 12px; font-weight: 600;">Custom Dynamic</span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 12px 16px; text-align: right;">
+                                <% if (r.name.toLowerCase() === 'admin') { %>
+                                    <span style="color: #94A3B8; font-size: 12px;">ไม่สามารถลบได้</span>
+                                <% } else { %>
+                                    <button type="button" class="btn-delete-role btn" data-role-id="<%= r.id %>" data-role-name="<%= r.name %>" style="padding: 4px 10px; font-size: 12px; background: #DC2626; color: white;">
+                                        ลบ
+                                    </button>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table></div>
+        </div>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const alertBox = document.getElementById('alert-box');
+    const createRoleForm = document.getElementById('create-role-form');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    createRoleForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('role-name').value.trim();
+        const description = document.getElementById('role-desc').value.trim();
+
+        try {
+            const res = await fetch('/api/admin/roles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'สร้าง Role ล้มเหลว');
+
+            showAlert('✅ สร้างบทบาทใหม่สำเร็จ! คุณสามารถไปกำหนดสิทธิ์ในตาราง ACL Matrix ได้ทันที', true);
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (err) {
+            showAlert('❌ ' + err.message, false);
+        }
+    });
+
+    document.querySelectorAll('.btn-delete-role').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const roleId = btn.dataset.roleId;
+            const roleName = btn.dataset.roleName;
+
+            if (!confirm(`ต้องการลบบทบาท "${roleName}" ใช่หรือไม่?`)) return;
+
+            try {
+                const res = await fetch(`/api/admin/roles/${roleId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'ลบ Role ล้มเหลว');
+
+                showAlert('✅ ลบบทบาทสำเร็จ!', true);
+                const row = document.getElementById(`role-row-${roleId}`);
+                if (row) row.remove();
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

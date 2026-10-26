@@ -1,0 +1,201 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1200px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="margin-bottom: 20px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B;">👥 จัดการผู้ใช้งานในระบบ (Users Management)</h1>
+            <p style="color: #64748B; margin-top: 4px;">เพิ่มผู้ใช้งาน แก้ไขบทบาท (Role) และลบบัญชีผู้ใช้ (มีระบบป้องกันการลบ Admin คนสุดท้าย)</p>
+        </div>
+        <button id="toggle-add-btn" type="button" style="background: #2563EB; color: white; padding: 9px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;" class="btn">
+            ➕ เพิ่มผู้ใช้งานใหม่
+        </button>
+    </div>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <!-- Create User Form (Modal / Collapsible) -->
+    <div id="create-user-section" style="background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);" class="d-none">
+        <h3 style="margin-top: 0; color: #1E293B;">เพิ่มบัญชีผู้ใช้งานใหม่</h3>
+        <form id="create-user-form">
+            <div style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));" class="d-grid gap-3">
+                <div>
+                    <label style="font-weight: 500; font-size: 13px;" class="form-label">ชื่อ-นามสกุล *</label>
+                    <input type="text" id="new-name" required placeholder="เช่น สมชาย ใจดี" class="form-control">
+                </div>
+                <div>
+                    <label style="font-weight: 500; font-size: 13px;" class="form-label">อีเมล *</label>
+                    <input type="email" id="new-email" required placeholder="user@example.com" class="form-control">
+                </div>
+                <div>
+                    <label style="font-weight: 500; font-size: 13px;" class="form-label">รหัสผ่าน *</label>
+                    <input type="password" id="new-password" required placeholder="อย่างน้อย 8 ตัวอักษร" class="form-control">
+                </div>
+                <div>
+                    <label style="font-weight: 500; font-size: 13px;" class="form-label">บทบาท (Role) *</label>
+                    <select id="new-role" required class="form-select">
+                        <% roles.forEach(function(r) { %>
+                            <option value="<%= r.name %>"><%= r.name %> (<%= r.description %>)</option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-top: 16px;" class="d-flex gap-2">
+                <button type="submit" style="background: #059669; color: white;" class="btn btn-primary">บันทึกผู้ใช้ใหม่</button>
+                <button type="button" id="cancel-create-btn" style="background: #64748B; color: white;" class="btn">ยกเลิก</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <section style="padding: 0; overflow: hidden; border: 1px solid #E2E8F0;">
+        <div style="overflow-x: auto;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;" class="table align-middle">
+                <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
+                        <th style="padding: 12px 16px;">ID</th>
+                        <th style="padding: 12px 16px;">ชื่อ-นามสกุล</th>
+                        <th style="padding: 12px 16px;">อีเมล</th>
+                        <th style="padding: 12px 16px;">บทบาท (Role)</th>
+                        <th style="padding: 12px 16px;">เปลี่ยนบทบาท</th>
+                        <th style="padding: 12px 16px; text-align: right;">การจัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% users.forEach(function(u) { %>
+                        <tr style="border-bottom: 1px solid #E2E8F0;" id="user-row-<%= u.id %>">
+                            <td style="padding: 12px 16px; color: #64748B;"><%= u.id %></td>
+                            <td style="padding: 12px 16px; font-weight: 600; color: #0F172A;"><%= u.name || 'ไม่ระบุชื่อ' %></td>
+                            <td style="padding: 12px 16px; color: #334155;"><%= u.email %></td>
+                            <td style="padding: 12px 16px;">
+                                <span style="background: <%= String(u.role).toLowerCase() === 'admin' ? '#7C3AED' : String(u.role).toLowerCase() === 'manager' ? '#2563EB' : String(u.role).toLowerCase() === 'staff' ? '#059669' : '#475569' %>; color: white; padding: 2px 8px; border-radius: 9999px; font-size: 12px; font-weight: 600;">
+                                    <%= u.role %>
+                                </span>
+                            </td>
+                            <td style="padding: 12px 16px;">
+                                <div style="display: flex; gap: 6px; align-items: center;" class="d-flex gap-1 align-items-center">
+                                    <select class="role-select form-select" data-user-id="<%= u.id %>" style="margin: 0; padding: 4px 8px; font-size: 13px; width: auto;">
+                                        <% roles.forEach(function(r) { %>
+                                            <option value="<%= r.name %>" <%= String(r.name).toLowerCase() === String(u.role).toLowerCase() ? 'selected' : '' %>>
+                                                <%= r.name %>
+                                            </option>
+                                        <% }); %>
+                                    </select>
+                                    <button type="button" class="btn-save-role btn" data-user-id="<%= u.id %>" style="padding: 4px 10px; font-size: 12px; background: #2563EB; color: white;">
+                                        เปลี่ยน
+                                    </button>
+                                </div>
+                            </td>
+                            <td style="padding: 12px 16px; text-align: right;">
+                                <button type="button" class="btn-delete-user btn" data-user-id="<%= u.id %>" data-user-name="<%= u.name || u.email %>" style="padding: 4px 10px; font-size: 12px; background: #DC2626; color: white;">
+                                    ลบ
+                                </button>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table></div>
+        </div>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const alertBox = document.getElementById('alert-box');
+    const toggleAddBtn = document.getElementById('toggle-add-btn');
+    const createSection = document.getElementById('create-user-section');
+    const cancelCreateBtn = document.getElementById('cancel-create-btn');
+    const createUserForm = document.getElementById('create-user-form');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    toggleAddBtn.addEventListener('click', () => {
+        createSection.style.display = createSection.style.display === 'none' ? 'block' : 'none';
+    });
+
+    cancelCreateBtn.addEventListener('click', () => {
+        createSection.style.display = 'none';
+    });
+
+    // เพิ่มผู้ใช้ใหม่
+    createUserForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('new-name').value.trim();
+        const email = document.getElementById('new-email').value.trim();
+        const password = document.getElementById('new-password').value;
+        const role = document.getElementById('new-role').value;
+
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, role })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'สร้างผู้ใช้ล้มเหลว');
+
+            showAlert('✅ เพิ่มผู้ใช้งานใหม่สำเร็จ!', true);
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (err) {
+            showAlert('❌ ' + err.message, false);
+        }
+    });
+
+    // เปลี่ยน Role
+    document.querySelectorAll('.btn-save-role').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const userId = btn.dataset.userId;
+            const select = document.querySelector(`.role-select[data-user-id="${userId}"]`);
+            const newRole = select.value;
+
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: newRole })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'เปลี่ยน Role ล้มเหลว');
+
+                showAlert('✅ อัปเดต Role ผู้ใช้เรียบร้อยแล้ว!', true);
+                setTimeout(() => window.location.reload(), 800);
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    });
+
+    // ลบผู้ใช้
+    document.querySelectorAll('.btn-delete-user').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const userId = btn.dataset.userId;
+            const userName = btn.dataset.userName;
+
+            if (!confirm(`ต้องการลบผู้ใช้ "${userName}" ใช่หรือไม่?`)) return;
+
+            try {
+                const res = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'ลบผู้ใช้ล้มเหลว');
+
+                showAlert('✅ ลบผู้ใช้เรียบร้อยแล้ว!', true);
+                const row = document.getElementById(`user-row-${userId}`);
+                if (row) row.remove();
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,175 @@
+<%- include('../partials/header', { title: 'ผู้ดูแลระบบ - Dynamic ACL & Logs' }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1100px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <!-- Header -->
+    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 24px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B; font-size: 22px;">👑 แผงควบคุมผู้ดูแลระบบ (Admin Portal)</h1>
+            <p style="color: #64748B; margin: 4px 0 0 0; font-size: 14px;">ควบคุม Dynamic ACL Matrix และตรวจสอบ Audit Logs ย้อนหลัง (หน้าเดียวจบตามข้อกำหนด)</p>
+        </div>
+        <button id="save-acl-btn" type="button" style="background: #059669; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;" class="btn">
+            💾 บันทึก Dynamic ACL Matrix
+        </button>
+    </div>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <!-- Section 1: ตาราง Dynamic ACL Matrix -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+        <div style="margin-bottom: 14px;" class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3 style="margin: 0; color: #1E293B; font-size: 16px;">🔑 ตาราง Role x Permission Matrix (Dynamic ACL)</h3>
+                <div style="font-size: 12px; color: #64748B;">เมื่อติ๊กเลือกและกดบันทึก จะมีผลบังคับใช้กับ Server-side Middleware ทันทีโดยไม่ต้อง Restart Server</div>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;" class="table align-middle">
+                <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                        <th style="padding: 10px 14px; min-width: 250px;">รายการสิทธิ์ (Permissions)</th>
+                        <th style="padding: 10px 14px; min-width: 100px;">Module</th>
+                        <% roles.forEach(function(role) { %>
+                            <th style="padding: 10px 14px; text-align: center; min-width: 120px; color: <%= role.name.toLowerCase() === 'admin' ? '#7C3AED' : '#1E293B' %>;">
+                                <div><%= role.name %></div>
+                                <div style="font-size: 11px; font-weight: normal; color: #64748B;"><%= role.description %></div>
+                            </th>
+                        <% }); %>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% permissions.forEach(function(perm) { %>
+                        <tr style="border-bottom: 1px solid #F1F5F9;">
+                            <td style="padding: 10px 14px;">
+                                <div style="font-weight: 600; color: #1E293B;"><%= perm.name %></div>
+                                <div style="font-size: 11px; color: #64748B; font-family: monospace;"><%= perm.code %></div>
+                            </td>
+                            <td style="padding: 10px 14px; color: #64748B;">
+                                <span style="background: #F1F5F9; padding: 2px 6px; border-radius: 4px; font-size: 11px;"><%= perm.module %></span>
+                            </td>
+                            <% roles.forEach(function(role) { 
+                                const isChecked = (matrix[role.id] && matrix[role.id].includes(perm.id)) || role.name.toLowerCase() === 'admin';
+                                const isAdmin = role.name.toLowerCase() === 'admin';
+                            %>
+                                <td style="padding: 10px 14px; text-align: center;">
+                                    <input 
+                                        type="checkbox" 
+                                        class="acl-checkbox form-check-input" 
+                                        data-role-id="<%= role.id %>" 
+                                        data-perm-id="<%= perm.id %>"
+                                        <%= isChecked ? 'checked' : '' %>
+                                        <%= isAdmin ? 'disabled title="Admin มีทุกสิทธิ์เสมอตามข้อกำหนด"' : '' %>
+                                        style="width: 17px; height: 17px; cursor: <%= isAdmin ? 'not-allowed' : 'pointer' %>; margin: 0 auto; display: inline-block;"
+                                    >
+                                </td>
+                            <% }); %>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table></div>
+        </div>
+    </section>
+
+    <!-- Section 2: ตาราง Audit Logs ย้อนหลัง -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px;">
+        <h3 style="margin-top: 0; color: #1E293B; font-size: 16px; margin-bottom: 4px;">📜 ประวัติการใช้งานระบบ (Audit Logs)</h3>
+        <p style="color: #64748B; font-size: 12px; margin-top: 0; margin-bottom: 14px;">
+            บันทึกถาวรลง PostgreSQL: การ Login, การส่งงาน, การเปลี่ยนสิทธิ์ และเหตุการณ์ที่ถูกปฏิเสธ (Access Denied)
+        </p>
+
+        <div style="overflow-x: auto;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;" class="table align-middle">
+                <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                        <th style="padding: 8px 12px;">วันเวลา</th>
+                        <th style="padding: 8px 12px;">ผู้ใช้งาน (Actor)</th>
+                        <th style="padding: 8px 12px;">เหตุการณ์ (Event)</th>
+                        <th style="padding: 8px 12px;">สถานะ</th>
+                        <th style="padding: 8px 12px;">รายละเอียด</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!logs || logs.length === 0) { %>
+                        <tr>
+                            <td colspan="5" style="padding: 20px; text-align: center; color: #64748B;">ไม่มีประวัติการใช้งาน</td>
+                        </tr>
+                    <% } else { %>
+                        <% logs.slice(0, 15).forEach(function(l) { %>
+                            <tr style="border-bottom: 1px solid #F1F5F9; <%= l.status === 'DENIED' ? 'background: #FFF5F5;' : '' %>">
+                                <td style="padding: 8px 12px; color: #64748B; white-space: nowrap;"><%= new Date(l.created_at).toLocaleString('th-TH') %></td>
+                                <td style="padding: 8px 12px; font-weight: 500;"><%= l.username_or_email || 'Anonymous' %></td>
+                                <td style="padding: 8px 12px;">
+                                    <span style="background: <%= l.event_type.includes('DENIED') ? '#FEE2E2' : '#F1F5F9' %>; color: <%= l.event_type.includes('DENIED') ? '#991B1B' : '#1E293B' %>; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 11px;">
+                                        <%= l.event_type %>
+                                    </span>
+                                </td>
+                                <td style="padding: 8px 12px;">
+                                    <span style="color: <%= l.status === 'SUCCESS' ? '#059669' : '#DC2626' %>; font-weight: 700;">
+                                        <%= l.status %>
+                                    </span>
+                                </td>
+                                <td style="padding: 8px 12px; max-width: 320px; overflow-wrap: anywhere; color: #475569;">
+                                    <%= l.details || '-' %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } %>
+                </tbody>
+            </table></div>
+        </div>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const saveBtn = document.getElementById('save-acl-btn');
+    const alertBox = document.getElementById('alert-box');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    saveBtn.addEventListener('click', async () => {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'กำลังบันทึก...';
+
+        try {
+            const roleIds = Array.from(new Set(
+                Array.from(document.querySelectorAll('.acl-checkbox')).map(cb => cb.dataset.roleId)
+            ));
+
+            for (const roleId of roleIds) {
+                const checkedPerms = Array.from(
+                    document.querySelectorAll(`.acl-checkbox[data-role-id="${roleId}"]:checked`)
+                ).map(cb => Number(cb.dataset.permId));
+
+                const res = await fetch('/api/admin/acl', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roleId: Number(roleId), permissionIds: checkedPerms })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'บันทึกสิทธิ์ล้มเหลว');
+                }
+            }
+
+            showAlert('✅ บันทึกสิทธิ์ Dynamic ACL สำเร็จเรียบร้อย! ระบบบังคับใช้สิทธิ์ทันทีโดยไม่ต้อง Restart Server', true);
+        } catch (err) {
+            showAlert('❌ ' + err.message, false);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 บันทึก Dynamic ACL Matrix';
+        }
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

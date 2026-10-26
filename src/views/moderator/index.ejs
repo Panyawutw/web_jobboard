@@ -1,0 +1,96 @@
+<%- include('../partials/header', { title: 'ระบบตรวจสอบประกาศงาน - Moderator' }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1000px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+        <h1 style="text-align: left; margin: 0; color: #1E293B; font-size: 22px;">🛠️ เจ้าหน้าที่ตรวจสอบประกาศงาน (Moderator Staff Portal)</h1>
+        <p style="color: #64748B; margin: 4px 0 0 0; font-size: 14px;">ตรวจสอบความถูกต้องของประกาศงานที่บริษัทส่งเข้ามาก่อนเผยแพร่สู่สาธารณะ (หน้าเดียวจบ)</p>
+    </div>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <!-- Section: รายการงานที่รอตรวจสอบ -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px;">
+        <h3 style="margin-top: 0; color: #1E293B; font-size: 16px;">⏳ รายการประกาศงานทั้งหมดในระบบ</h3>
+
+        <% if (jobs.length === 0) { %>
+            <p style="color: #64748B; font-size: 14px;">ยังไม่มีรายการประกาศงานในระบบ</p>
+        <% } else { %>
+            <div style="display: flex; flex-direction: column; gap: 16px;" class="d-flex flex-column gap-3">
+                <% jobs.forEach(function(job) { %>
+                    <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: <%= job.status === 'pending' ? '#FFFBEB' : '#FFFFFF' %>;">
+                        <div style="margin-bottom: 8px;" class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <span style="background: #E0E7FF; color: #3730A3; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                                    <%= job.category %>
+                                </span>
+                                <h4 style="margin: 6px 0 4px 0; color: #1E293B; font-size: 16px;"><%= job.title %></h4>
+                                <div style="color: #64748B; font-size: 12px;">
+                                    โดยบริษัท: <strong><%= job.company_name || 'บริษัท' %></strong> | งบประมาณ: <strong><%= Number(job.budget).toLocaleString() %> ฿</strong> | สถานที่: <%= job.location %>
+                                </div>
+                            </div>
+                            <div>
+                                <span style="background: <%= job.status === 'approved' ? '#DCFCE7' : job.status === 'rejected' ? '#FEE2E2' : '#FEF3C7' %>; color: <%= job.status === 'approved' ? '#166534' : job.status === 'rejected' ? '#991B1B' : '#92400E' %>; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+                                    <%= job.status === 'approved' ? 'อนุมัติแล้ว' : job.status === 'rejected' ? 'ไม่อนุมัติ' : 'รอตรวจสอบ' %>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #334155; margin-bottom: 12px; line-height: 1.5;">
+                            <%= job.description %>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;" class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn-mod-action btn" data-id="<%= job.id %>" data-status="approved" style="background: #059669; color: white; padding: 6px 14px; font-size: 12px; border-radius: 4px;">
+                                ✅ ตรวจสอบผ่าน (Approve)
+                            </button>
+                            <button type="button" class="btn-mod-action btn" data-id="<%= job.id %>" data-status="rejected" style="background: #DC2626; color: white; padding: 6px 14px; font-size: 12px; border-radius: 4px;">
+                                ❌ ปฏิเสธประกาศ (Reject)
+                            </button>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } %>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const alertBox = document.getElementById('alert-box');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('.btn-mod-action').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const status = btn.dataset.status;
+
+            try {
+                const res = await fetch(`/api/moderator/jobs/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'ดำเนินการล้มเหลว');
+
+                showAlert(`✅ บันทึกผลการตรวจสอบเป็น "${status === 'approved' ? 'อนุมัติแล้ว' : 'ไม่อนุมัติ'}" เรียบร้อย`, true);
+                setTimeout(() => window.location.reload(), 800);
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

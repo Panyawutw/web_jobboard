@@ -1,0 +1,138 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1200px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="margin-bottom: 20px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B;">🔑 Dynamic ACL (Role x Permission Matrix)</h1>
+            <p style="color: #64748B; margin-top: 4px;">
+                กำหนดสิทธิ์ของแต่ละบทบาทผ่านหน้าเว็บได้ทันที โดย <strong>ไม่ต้องแก้ไข Code หรือ Restart Server</strong>
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px;" class="d-flex gap-2">
+            <a href="/admin/roles" style="background: #475569; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 14px;" class="btn btn-outline-secondary">
+                ➕ จัดการ/เพิ่มบทบาทใหม่
+            </a>
+            <button id="save-all-btn" type="button" style="background: #059669; color: white; padding: 8px 18px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer;" class="btn">
+                💾 บันทึกสิทธิ์ทั้งหมด
+            </button>
+        </div>
+    </div>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <section style="padding: 0; overflow: hidden; border: 1px solid #E2E8F0;">
+        <div style="overflow-x: auto;">
+            <div class="table-responsive"><table id="matrix-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;" class="table align-middle">
+                <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
+                        <th style="padding: 14px 16px; min-width: 250px; color: #1E293B;">รายการสิทธิ์ (Permissions)</th>
+                        <th style="padding: 14px 16px; min-width: 100px; color: #64748B;">Module</th>
+                        <% roles.forEach(function(role) { %>
+                            <th style="padding: 14px 16px; text-align: center; min-width: 130px; color: <%= role.name.toLowerCase() === 'admin' ? '#7C3AED' : '#1E293B' %>;">
+                                <div><%= role.name %></div>
+                                <div style="font-size: 11px; font-weight: normal; color: #64748B;"><%= role.description %></div>
+                            </th>
+                        <% }); %>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                    let currentModule = '';
+                    permissions.forEach(function(perm) { 
+                    %>
+                        <% if (perm.module !== currentModule) { 
+                            currentModule = perm.module;
+                        %>
+                            <tr style="background: #F1F5F9; font-weight: 600;">
+                                <td colspan="<%= 2 + roles.length %>" style="padding: 8px 16px; color: #334155; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em;">
+                                    📁 Module: <%= currentModule %>
+                                </td>
+                            </tr>
+                        <% } %>
+
+                        <tr style="border-bottom: 1px solid #E2E8F0;" class="perm-row">
+                            <td style="padding: 12px 16px;">
+                                <div style="font-weight: 500; color: #0F172A;"><%= perm.name %></div>
+                                <div style="font-size: 12px; color: #64748B; font-family: monospace;"><%= perm.code %></div>
+                            </td>
+                            <td style="padding: 12px 16px; color: #64748B; font-size: 12px;">
+                                <span style="background: #E2E8F0; padding: 2px 6px; border-radius: 4px;"><%= perm.module %></span>
+                            </td>
+                            <% roles.forEach(function(role) { 
+                                const isChecked = (matrix[role.id] && matrix[role.id].includes(perm.id)) || role.name.toLowerCase() === 'admin';
+                                const isAdmin = role.name.toLowerCase() === 'admin';
+                            %>
+                                <td style="padding: 12px 16px; text-align: center;">
+                                    <input 
+                                        type="checkbox" 
+                                        class="acl-checkbox form-check-input" 
+                                        data-role-id="<%= role.id %>" 
+                                        data-perm-id="<%= perm.id %>"
+                                        <%= isChecked ? 'checked' : '' %>
+                                        <%= isAdmin ? 'disabled title="Admin มีทุกสิทธิ์เสมอตามข้อกำหนด"' : '' %>
+                                        style="width: 18px; height: 18px; cursor: <%= isAdmin ? 'not-allowed' : 'pointer' %>; margin: 0 auto; display: inline-block;"
+                                    >
+                                </td>
+                            <% }); %>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table></div>
+        </div>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const saveAllBtn = document.getElementById('save-all-btn');
+    const alertBox = document.getElementById('alert-box');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        setTimeout(() => { alertBox.scrollIntoView({ behavior: 'smooth' }); }, 100);
+    }
+
+    saveAllBtn.addEventListener('click', async () => {
+        saveAllBtn.disabled = true;
+        saveAllBtn.textContent = 'กำลังบันทึก...';
+
+        try {
+            // รวบรวมสิทธิ์ของแต่ละ Role
+            const roleIds = Array.from(new Set(
+                Array.from(document.querySelectorAll('.acl-checkbox')).map(cb => cb.dataset.roleId)
+            ));
+
+            for (const roleId of roleIds) {
+                const checkedPerms = Array.from(
+                    document.querySelectorAll(`.acl-checkbox[data-role-id="${roleId}"]:checked`)
+                ).map(cb => Number(cb.dataset.permId));
+
+                const response = await fetch('/api/admin/acl', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roleId: Number(roleId), permissionIds: checkedPerms })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'บันทึกสิทธิ์ล้มเหลว');
+                }
+            }
+
+            showAlert('✅ บันทึกสิทธิ์ Dynamic ACL สำเร็จเรียบร้อย! ระบบบังคับใช้สิทธิ์ทันทีโดยไม่ต้อง Restart Server', true);
+        } catch (error) {
+            showAlert('❌ เกิดข้อผิดพลาด: ' + error.message, false);
+        } finally {
+            saveAllBtn.disabled = false;
+            saveAllBtn.textContent = '💾 บันทึกสิทธิ์ทั้งหมด';
+        }
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

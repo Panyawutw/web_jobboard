@@ -1,0 +1,118 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1100px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <!-- Welcome Header -->
+    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B; font-size: 24px;">ยินดีต้อนรับ, <%= accountName %>!</h1>
+            <p style="color: #64748B; margin: 4px 0 0 0;">
+                บทบาทของคุณ: 
+                <span style="background: <%= String(accountRole).toLowerCase() === 'admin' ? '#7C3AED' : String(accountRole).toLowerCase() === 'manager' ? '#2563EB' : String(accountRole).toLowerCase() === 'staff' ? '#059669' : '#475569' %>; color: white; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600;">
+                    <%= accountRole %>
+                </span>
+                (ID: #<%= accountId %>)
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px;" class="d-flex gap-2">
+            <a href="/app/jobs/new" style="background: #2563EB; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;" class="btn btn-primary">
+                ➕ ส่งคำขอเพิ่มงานใหม่
+            </a>
+            <a href="/app/jobs" style="background: #F1F5F9; color: #1E293B; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; border: 1px solid #CBD5E1;" class="btn btn-outline-secondary">
+                🔍 ค้นหางานทั้งหมด
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 28px;" class="d-grid gap-3">
+        <div style="background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #2563EB;">
+            <div style="color: #64748B; font-size: 13px;">คำของานที่ฉันสร้าง</div>
+            <div style="font-size: 28px; font-weight: 700; color: #1E293B; margin-top: 4px;"><%= myJobs.length %></div>
+            <a href="/app/my-jobs" style="color: #2563EB; font-size: 12px; text-decoration: none;">ดูงานของฉัน &rarr;</a>
+        </div>
+
+        <% if (String(accountRole).toLowerCase() === 'staff' || String(accountRole).toLowerCase() === 'admin' || String(accountRole).toLowerCase() === 'manager') { %>
+            <div style="background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #059669;">
+                <div style="color: #64748B; font-size: 13px;">งานที่ได้รับมอบหมายให้ฉัน</div>
+                <div style="font-size: 28px; font-weight: 700; color: #1E293B; margin-top: 4px;"><%= assignedJobs.length %></div>
+                <span style="color: #64748B; font-size: 12px;">งานที่ต้องดำเนินการ</span>
+            </div>
+        <% } %>
+
+        <div style="background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #7C3AED;">
+            <div style="color: #64748B; font-size: 13px;">งานทั้งหมดในระบบ</div>
+            <div style="font-size: 28px; font-weight: 700; color: #1E293B; margin-top: 4px;"><%= allJobsCount %></div>
+            <a href="/app/jobs" style="color: #7C3AED; font-size: 12px; text-decoration: none;">เปิดดูรายการ &rarr;</a>
+        </div>
+    </div>
+
+    <!-- My Jobs List -->
+    <section style="margin-bottom: 24px;">
+        <div style="margin-bottom: 16px;" class="d-flex justify-content-between align-items-center">
+            <h3 style="margin: 0; color: #1E293B;">📋 คำของานที่ฉันส่ง (My Job Requests)</h3>
+            <a href="/app/jobs/new" style="color: #2563EB; font-size: 13px; text-decoration: none;">+ ส่งคำขอใหม่</a>
+        </div>
+
+        <% if (myJobs.length === 0) { %>
+            <div style="text-align: center; padding: 30px; color: #64748B; background: #F8FAFC; border-radius: 8px;">
+                ท่านยังไม่ได้สร้างคำของานใดๆ <br>
+                <a href="/app/jobs/new" style="display: inline-block; margin-top: 10px; color: #2563EB; font-weight: 600;">คลิกที่นี่เพื่อเริ่มส่งคำขอแรกของคุณ</a>
+            </div>
+        <% } else { %>
+            <div style="display: flex; flex-direction: column; gap: 12px;" class="d-flex flex-column gap-3">
+                <% myJobs.forEach(function(job) { %>
+                    <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <a href="/app/jobs/<%= job.id %>" style="font-size: 16px; font-weight: 600; color: #1E293B; text-decoration: none;">
+                                <%= job.title %>
+                            </a>
+                            <div style="color: #64748B; font-size: 13px; margin-top: 4px;">
+                                หมวดหมู่: <%= job.category %> | งบประมาณ: <%= Number(job.budget).toLocaleString() %> บาท | สถานที่: <%= job.location %>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;" class="d-flex align-items-center gap-3">
+                            <span style="background: <%= job.status === 'approved' ? '#DCFCE7' : job.status === 'rejected' ? '#FEE2E2' : '#FEF3C7' %>; color: <%= job.status === 'approved' ? '#166534' : job.status === 'rejected' ? '#991B1B' : '#92400E' %>; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600;">
+                                <%= job.status %>
+                            </span>
+                            <a href="/app/jobs/<%= job.id %>" style="background: #2563EB; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px;" class="btn btn-primary">
+                                ดูรายละเอียด
+                            </a>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } %>
+    </section>
+
+    <!-- Staff Assigned Jobs -->
+    <% if (assignedJobs && assignedJobs.length > 0) { %>
+        <section>
+            <h3 style="margin-top: 0; color: #1E293B; margin-bottom: 16px;">🛠️ งานที่ได้รับมอบหมายให้รับผิดชอบ (Assigned Tasks)</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;" class="d-flex flex-column gap-3">
+                <% assignedJobs.forEach(function(job) { %>
+                    <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <a href="/app/jobs/<%= job.id %>" style="font-size: 16px; font-weight: 600; color: #1E293B; text-decoration: none;">
+                                <%= job.title %>
+                            </a>
+                            <div style="color: #64748B; font-size: 13px; margin-top: 4px;">
+                                ผู้ส่งคำขอ: <%= job.creator_name || 'ผู้ใช้งาน' %> | งบประมาณ: <%= Number(job.budget).toLocaleString() %> บาท
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;" class="d-flex align-items-center gap-3">
+                            <span style="background: #E0E7FF; color: #3730A3; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600;">
+                                <%= job.status %>
+                            </span>
+                            <a href="/app/jobs/<%= job.id %>" style="background: #059669; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px;" class="btn btn-outline-secondary">
+                                ปรับสถานะงาน
+                            </a>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </section>
+    <% } %>
+</main>
+
+<%- include('../partials/footer') %>

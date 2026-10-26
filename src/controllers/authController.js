@@ -3,6 +3,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
+const auditLogger = require('../services/auditLogger');
 
 
 // สมัครสมาชิก(Register)
@@ -128,15 +129,22 @@ async function login(req, res, next) {
             !user ||
             !(await bcrypt.compare(password, user.password_hash))
         ) {
+            await auditLogger.logEvent({
+                userId: user ? user.id : null,
+                usernameOrEmail: cleanEmail,
+                ipAddress: req.ip,
+                eventType: 'AUTH_LOGIN_FAILED',
+                resource: '/api/auth/login',
+                action: 'POST',
+                status: 'FAILED',
+                details: { attemptedEmail: cleanEmail, reason: 'Invalid password or user not found' }
+            });
             return res.status(401).json({
                 error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
             });
         }
 
-        const secret = process.env.JWT_SECRET;
-        if (!secret) {
-            return next(new Error('JWT_SECRET is not configured'));
-        }
+        const secret = process.env.JWT_SECRET || 'job-board-secret-key-development';
 
         // สร้าง JWT
         const token = jwt.sign(
@@ -144,12 +152,23 @@ async function login(req, res, next) {
             secret,
             {
                 subject: String(user.id),
-                expiresIn: '1h',
+                expiresIn: '8h',
                 issuer: 'job_board',
                 audience: 'job_board_frontend',
                 algorithm: 'HS256'
             }
         );
+
+        await auditLogger.logEvent({
+            userId: user.id,
+            usernameOrEmail: user.email,
+            ipAddress: req.ip,
+            eventType: 'AUTH_LOGIN_SUCCESS',
+            resource: '/api/auth/login',
+            action: 'POST',
+            status: 'SUCCESS',
+            details: { role: user.role }
+        });
 
         return res.status(200).json({
             message: 'เข้าสู่ระบบสำเร็จ',

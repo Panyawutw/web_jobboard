@@ -1,0 +1,161 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main class="fh-page-main">
+  <div class="container-xl py-4">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- หัวหน้า + ปุ่มสร้างงานใหม่                               -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <div>
+        <h1 class="h4 fw-bold text-dark mb-1">
+          <i class="bi bi-search me-2"></i>รายการงานทั้งหมด
+        </h1>
+        <p class="text-muted small mb-0">รายการงานและคำขอทั้งหมดในระบบ FreelanceHub</p>
+      </div>
+      <a href="/app/jobs/new" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>ส่งคำขอเพิ่มงานใหม่
+      </a>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- แถบกรองข้อมูล (Filter Bar)                               -->
+    <!-- ส่ง GET ไปที่ /app/jobs พร้อม query ?search=&category=&status= -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="card border mb-4">
+      <div class="card-body">
+        <form method="GET" action="/app/jobs" class="row g-3 align-items-end">
+
+          <!-- ช่องค้นหา -->
+          <div class="col-12 col-md-5">
+            <label class="form-label fw-medium">คำค้นหา</label>
+            <input
+              type="text"
+              name="search"
+              class="form-control"
+              value="<%= filters.search || '' %>"
+              placeholder="เช่น Mobile App, Node.js">
+          </div>
+
+          <!-- เลือกหมวดหมู่ -->
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-medium">หมวดหมู่</label>
+            <select name="category" class="form-select">
+              <option value="all">ทุกหมวดหมู่</option>
+              <option value="Web Development" <%= filters.category === 'Web Development' ? 'selected' : '' %>>Web Development</option>
+              <option value="Design"          <%= filters.category === 'Design'          ? 'selected' : '' %>>Design</option>
+              <option value="Android"         <%= filters.category === 'Android'         ? 'selected' : '' %>>Android</option>
+              <option value="Data Analyst"    <%= filters.category === 'Data Analyst'    ? 'selected' : '' %>>Data Analyst</option>
+              <option value="DevOps"          <%= filters.category === 'DevOps'          ? 'selected' : '' %>>DevOps</option>
+            </select>
+          </div>
+
+          <!-- เลือกสถานะ -->
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-medium">สถานะงาน</label>
+            <select name="status" class="form-select">
+              <option value="all">ทุกสถานะ</option>
+              <option value="pending"     <%= filters.status === 'pending'     ? 'selected' : '' %>>Pending (รอตรวจสอบ)</option>
+              <option value="approved"    <%= filters.status === 'approved'    ? 'selected' : '' %>>Approved (อนุมัติแล้ว)</option>
+              <option value="rejected"    <%= filters.status === 'rejected'    ? 'selected' : '' %>>Rejected (ปฏิเสธ)</option>
+              <option value="in_progress" <%= filters.status === 'in_progress' ? 'selected' : '' %>>In Progress (กำลังทำ)</option>
+              <option value="completed"   <%= filters.status === 'completed'   ? 'selected' : '' %>>Completed (เสร็จสิ้น)</option>
+            </select>
+          </div>
+
+          <!-- ปุ่มค้นหา -->
+          <div class="col-12 col-md-1">
+            <button type="submit" class="btn btn-primary w-100">ค้นหา</button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- รายการการ์ดงาน                                            -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="d-flex flex-column gap-3">
+
+      <!-- กรณีไม่มีผลลัพธ์ -->
+      <% if (jobs.length === 0) { %>
+        <div class="card text-center py-5">
+          <div class="card-body text-muted">
+            <i class="bi bi-inbox fs-2 mb-2 d-block"></i>
+            ไม่พบรายการงานที่ตรงกับเงื่อนไข
+          </div>
+        </div>
+
+      <!-- กรณีมีงาน: วนลูปแสดงทุกรายการ -->
+      <% } else { %>
+        <% jobs.forEach(function(job) { %>
+
+          <div class="card border d-flex flex-row justify-content-between align-items-center flex-wrap gap-3 p-3">
+
+            <!-- ข้อมูลงาน (ซ้าย) -->
+            <div class="flex-grow-1">
+
+              <!-- หมวดหมู่ + สถานที่ -->
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary-emphasis"><%= job.category %></span>
+                <span class="text-muted small">
+                  <i class="bi bi-geo-alt-fill me-1"></i><%= job.location %>
+                </span>
+              </div>
+
+              <!-- ชื่องาน (คลิกได้) -->
+              <h3 class="h6 fw-bold mb-1">
+                <a href="/app/jobs/<%= job.id %>" class="text-dark text-decoration-none stretched-link">
+                  <%= job.title %>
+                </a>
+              </h3>
+
+              <!-- คำอธิบายย่อ (ตัดเกิน 150 ตัวอักษร) -->
+              <p class="text-muted small mb-1">
+                <%= job.description.length > 150 ? job.description.substring(0, 150) + '...' : job.description %>
+              </p>
+
+              <!-- ผู้ส่งคำขอ + วันที่ -->
+              <div class="text-muted" style="font-size:12px;">
+                ผู้ส่งคำขอ: <strong><%= job.creator_name || 'ผู้ใช้งาน' %></strong>
+                &nbsp;|&nbsp;
+                สร้างเมื่อ: <%= new Date(job.created_at).toLocaleDateString('th-TH') %>
+              </div>
+
+            </div>
+
+            <!-- งบประมาณ + สถานะ (ขวา) -->
+            <div class="text-end" style="min-width:160px;">
+              <div class="fw-bold text-primary fs-5 mb-1">
+                <%= Number(job.budget).toLocaleString() %> ฿
+              </div>
+              <%
+                // กำหนดสีของ badge ตามสถานะ
+                var statusColors = {
+                  approved   : 'success',
+                  rejected   : 'danger',
+                  in_progress: 'primary',
+                  completed  : 'success',
+                  pending    : 'warning'
+                };
+                var badgeColor = statusColors[job.status] || 'secondary';
+              %>
+              <span class="badge rounded-pill bg-<%= badgeColor %>-subtle text-<%= badgeColor %>-emphasis mb-2">
+                <%= job.status %>
+              </span>
+            </div>
+
+          </div><!-- /.card -->
+
+        <% }); %>
+      <% } %>
+
+    </div><!-- /.d-flex -->
+
+  </div><!-- /.container-xl -->
+</main>
+
+<%- include('../partials/footer') %>

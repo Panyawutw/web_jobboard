@@ -7,25 +7,39 @@ const webAuthController = require('../controllers/webAuthController');
 const oauthController = require('../controllers/oauthController');
 const firebaseAuthController = require('../controllers/firebaseAuthController');
 const passwordResetController = require('../controllers/passwordResetController');
+const jobViewController = require('../controllers/jobViewController');
 
 const router = express.Router();
 
-// ป้องกันการยิงสแปมฟอร์มสมัครสมาชิก (จำกัดไม่เกิน 10 ครั้งต่อ 15 นาที ต่อ IP)
+// ป้องกันการยิงสแปมฟอร์มสมัครสมาชิกใน Production; ปิดเฉพาะในโหมดพัฒนาเพื่อให้ทดสอบได้ต่อเนื่อง
 const registrationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
+  skip: () => process.env.NODE_ENV !== 'production',
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: 'ส่งคำขอมากเกินไป กรุณารอสักครู่แล้วลองใหม่'
+  handler: (req, res) => {
+    const role = req.body?.role === 'company' ? 'company' : 'jobSeeker';
+    const values = { ...(req.body || {}) };
+    delete values.password;
+    delete values.confirmPassword;
+
+    return res.status(429).render('pages/register', {
+      title: 'สมัครสมาชิก - FreelanceHub',
+      role,
+      values,
+      errors: { form: 'ส่งคำขอสมัครมากเกินไป กรุณารอสักครู่แล้วลองใหม่' },
+      success: null
+    });
+  }
 });
 
-// หน้าแรกและหน้าประวัติของ FreelanceHub
-router.get('/', (req, res) => {
-  res.render('pages/index', {
-    title: 'FreelanceHub - แพลตฟอร์มค้นหาและจัดการงานฟรีแลนซ์',
-    accountName: req.session ? req.session.accountName : null
-  });
-});
+// หน้าแรกและรายการค้นหางานทั้งหมด (สไตล์ JobThai - เข้าถึงได้ทั้ง Guest และสมาชิก)
+router.get('/', jobViewController.showHomePageings);
+router.get('/jobs', jobViewController.showHomePageings);
+
+// หน้ารายละเอียดงาน (Job Details Page - สไตล์ JobThai)
+router.get('/jobs/:id', jobViewController.showJobDetail);
 
 router.get('/history', (req, res) => {
   res.render('pages/history', {

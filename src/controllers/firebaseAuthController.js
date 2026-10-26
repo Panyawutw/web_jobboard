@@ -96,9 +96,12 @@ async function firebaseLogin(req, res, next) {
     }
   } catch (error) {
     console.error('// [BACKEND] Firebase login controller error:', error);
+    const databaseUnavailable = ['28P01', '42P01', 'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND'].includes(error.code);
     return res.status(500).json({
       success: false,
-      message: 'เกิดข้อผิดพลาดในการประมวลผลบนเซิร์ฟเวอร์'
+      message: databaseUnavailable
+        ? 'ระบบฐานข้อมูลยังไม่พร้อม กรุณาตรวจสอบการตั้งค่า PostgreSQL ในไฟล์ .env'
+        : 'เกิดข้อผิดพลาดในการประมวลผลบนเซิร์ฟเวอร์'
     });
   }
 }

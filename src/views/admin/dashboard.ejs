@@ -1,0 +1,116 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1200px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="margin-bottom: 24px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B;">⚙️ แผงควบคุมผู้ดูแลระบบ (Admin Dashboard)</h1>
+            <p style="color: #64748B; margin-top: 4px;">การจัดการสิทธิ์ Dynamic ACL, บัญชีผู้ใช้, บทบาท, และประวัติการใช้งานระบบ</p>
+        </div>
+        <div style="display: flex; gap: 10px;" class="d-flex gap-2">
+            <a href="/admin/acl" style="background: #7C3AED; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;" class="btn btn-outline-secondary">
+                🔑 Dynamic ACL Matrix
+            </a>
+            <a href="/admin/users" style="background: #2563EB; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;" class="btn btn-primary">
+                👥 จัดการผู้ใช้
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 30px;" class="d-grid gap-3">
+        <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #2563EB;">
+            <div style="color: #64748B; font-size: 13px;">จำนวนผู้ใช้งาน</div>
+            <div style="font-size: 32px; font-weight: 700; color: #1E293B; margin-top: 4px;"><%= stats.users %></div>
+            <a href="/admin/users" style="color: #2563EB; font-size: 13px; text-decoration: none;">ดูรายชื่อทั้งหมด &rarr;</a>
+        </div>
+        <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #7C3AED;">
+            <div style="color: #64748B; font-size: 13px;">บทบาทในระบบ (Roles)</div>
+            <div style="font-size: 32px; font-weight: 700; color: #1E293B; margin-top: 4px;"><%= stats.roles %></div>
+            <a href="/admin/roles" style="color: #7C3AED; font-size: 13px; text-decoration: none;">จัดการบทบาท &rarr;</a>
+        </div>
+        <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #059669;">
+            <div style="color: #64748B; font-size: 13px;">รายการสิทธิ์ (Permissions)</div>
+            <div style="font-size: 32px; font-weight: 700; color: #1E293B; margin-top: 4px;"><%= stats.permissions %></div>
+            <a href="/admin/acl" style="color: #059669; font-size: 13px; text-decoration: none;">กำหนดสิทธิ์ Matrix &rarr;</a>
+        </div>
+        <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #0A66C2;">
+            <div style="color: #64748B; font-size: 13px;">คำของานในระบบ</div>
+            <div style="font-size: 32px; font-weight: 700; color: #1E293B; margin-top: 4px;"><%= stats.jobs %></div>
+            <a href="/app/jobs" style="color: #0A66C2; font-size: 13px; text-decoration: none;">ดูรายการงาน &rarr;</a>
+        </div>
+    </div>
+
+    <div style="grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));" class="d-grid gap-4">
+        <!-- Recent Audit Logs -->
+        <section style="margin: 0;">
+            <div style="margin-bottom: 16px;" class="d-flex justify-content-between align-items-center">
+                <h3 style="margin: 0; color: #1E293B;">📜 ประวัติการใช้งานล่าสุด (Audit Logs)</h3>
+                <a href="/admin/logs" style="color: #2563EB; font-size: 13px; text-decoration: none;">ดูทั้งหมด &rarr;</a>
+            </div>
+
+            <% if (!recentLogs || recentLogs.length === 0) { %>
+                <p style="color: #64748B;">ยังไม่มีรายการประวัติการใช้งาน</p>
+            <% } else { %>
+                <div style="overflow-x: auto;">
+                    <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 13px;" class="table align-middle">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #E2E8F0; text-align: left;">
+                                <th style="padding: 8px;">วันเวลา</th>
+                                <th style="padding: 8px;">ผู้ใช้</th>
+                                <th style="padding: 8px;">เหตุการณ์</th>
+                                <th style="padding: 8px;">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% recentLogs.slice(0, 8).forEach(function(log) { %>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 8px; color: #64748B;"><%= new Date(log.created_at).toLocaleString('th-TH') %></td>
+                                    <td style="padding: 8px; font-weight: 500;"><%= log.username_or_email || 'Anonymous' %></td>
+                                    <td style="padding: 8px;"><span style="background: #F1F5F9; padding: 2px 6px; border-radius: 4px;"><%= log.event_type %></span></td>
+                                    <td style="padding: 8px;">
+                                        <span style="color: <%= log.status === 'SUCCESS' ? '#059669' : '#DC2626' %>; font-weight: 600;">
+                                            <%= log.status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table></div>
+                </div>
+            <% } %>
+        </section>
+
+        <!-- Recent Jobs -->
+        <section style="margin: 0;">
+            <div style="margin-bottom: 16px;" class="d-flex justify-content-between align-items-center">
+                <h3 style="margin: 0; color: #1E293B;">💼 รายการงานล่าสุดในระบบ</h3>
+                <a href="/app/jobs" style="color: #2563EB; font-size: 13px; text-decoration: none;">ดูงานทั้งหมด &rarr;</a>
+            </div>
+
+            <% if (!jobs || jobs.length === 0) { %>
+                <p style="color: #64748B;">ยังไม่มีรายการงานในระบบ</p>
+            <% } else { %>
+                <div style="display: flex; flex-direction: column; gap: 10px;" class="d-flex flex-column gap-2">
+                    <% jobs.forEach(function(job) { %>
+                        <div style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px;" class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="/app/jobs/<%= job.id %>" style="font-weight: 600; color: #1E293B; text-decoration: none;">
+                                    <%= job.title %>
+                                </a>
+                                <div style="color: #64748B; font-size: 12px; margin-top: 2px;">
+                                    งบประมาณ: <%= Number(job.budget).toLocaleString() %> บาท | โดย: <%= job.creator_name || 'ผู้ใช้' %>
+                                </div>
+                            </div>
+                            <span style="background: <%= job.status === 'approved' ? '#DCFCE7' : job.status === 'rejected' ? '#FEE2E2' : '#FEF3C7' %>; color: <%= job.status === 'approved' ? '#166534' : job.status === 'rejected' ? '#991B1B' : '#92400E' %>; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 600;">
+                                <%= job.status %>
+                            </span>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </section>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f2ee">
-    <title>สมัครสมาชิก | ก้าว</title>
+    <meta name="theme-color" content="#F2F2F7">
+    <title>สมัครสมาชิก - FreelanceHub</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,16 +12,19 @@
       href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     >
-    <link rel="stylesheet" href="/css/navbar.css">
-    <link rel="stylesheet" href="/css/register.css?v=8">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/navbar.css?v=14">
+    <link rel="stylesheet" href="/css/register.css?v=11">
+      <link rel="stylesheet" href="/css/ios-theme.css?v=4">
   </head>
 
   <body>
     <%- include('../partials/navbar') %>
-    <main class="page">
+    <main class="page container-fluid">
       <!-- หน้าซ้ายเปลี่ยนข้อความและภาพตาม Role ที่เลือก -->
       <section
-        class="register-card <%= role === 'company' ? 'company-mode' : '' %>"
+        class="register-card <%= role === 'company' ? 'company-mode' : '' %> card"
         aria-labelledby="title"
       >
         <div class="card-aside">
@@ -47,7 +50,7 @@
           </p>
 
           <img
-            class="illustration"
+            class="illustration img-fluid"
             src="<%= role === 'company'
               ? '/images/photo-1521737711867-e3b97375f902.avif'
               : '/images/photo-1498050108023-c5249f4df085.avif' %>"
@@ -99,7 +102,7 @@
             <h2 id="title">
               <%= role === 'company' ? 'สมัครบัญชีบริษัท' : 'สมัครสมาชิก' %>
             </h2>
-            <p>กรอกข้อมูลเพื่อเริ่มต้นใช้งานก้าว</p>
+            <p>กรอกข้อมูลเพื่อเริ่มต้นใช้งาน FreelanceHub</p>
           </div>
 
           <% if (errors.form) { %>
@@ -140,24 +143,24 @@
             <% if (role === 'company') { %>
               <!-- ข้อมูลบัญชีของบริษัท -->
               <div class="section-title">ข้อมูลบัญชี</div>
-              <div class="fields two-col">
-                <div class="field">
-                  <label for="username">ชื่อผู้ใช้ <em>*</em></label>
+              <div class="row g-3">
+                <div class="field col-12 col-md-6">
+                  <label for="username" class="form-label">ชื่อผู้ใช้ <em>*</em></label>
                   <input
                     id="username"
                     name="username"
                     value="<%= values.username || '' %>"
                     placeholder="ชื่อผู้ใช้"
                     required
-                    autocomplete="username"
+                    autocomplete="username" class="form-control"
                   >
                   <% if (errors.username) { %>
                     <small class="field-error"><%= errors.username %></small>
                   <% } %>
                 </div>
 
-                <div class="field">
-                  <label for="accountEmail">อีเมลบัญชี <em>*</em></label>
+                <div class="field col-12 col-md-6">
+                  <label for="accountEmail" class="form-label">อีเมลบัญชี <em>*</em></label>
                   <input
                     id="accountEmail"
                     name="accountEmail"
@@ -165,7 +168,7 @@
                     value="<%= values.accountEmail || '' %>"
                     placeholder="you@company.com"
                     required
-                    autocomplete="email"
+                    autocomplete="email" class="form-control"
                   >
                   <% if (errors.accountEmail) { %>
                     <small class="field-error"><%= errors.accountEmail %></small>
@@ -188,24 +191,24 @@
               </div>
 
               <div class="section-title contact-title">ข้อมูลบริษัทและผู้ติดต่อ</div>
-              <div class="fields two-col">
-                <div class="field">
-                  <label for="companyName">ชื่อบริษัท <em>*</em></label>
+              <div class="row g-3">
+                <div class="field col-12 col-md-6">
+                  <label for="companyName" class="form-label">ชื่อบริษัท <em>*</em></label>
                   <input
                     id="companyName"
                     name="companyName"
                     value="<%= values.companyName || '' %>"
                     placeholder="ชื่อบริษัท"
-                    required
+                    required class="form-control"
                   >
                   <% if (errors.companyName) { %>
                     <small class="field-error"><%= errors.companyName %></small>
                   <% } %>
                 </div>
 
-                <div class="field">
-                  <label for="businessType">ลักษณะธุรกิจ <em>*</em></label>
-                  <select id="businessType" name="businessType" required>
+                <div class="field col-12 col-md-6">
+                  <label for="businessType" class="form-label">ลักษณะธุรกิจ <em>*</em></label>
+                  <select id="businessType" name="businessType" required class="form-select">
                     <option value="">เลือกลักษณะธุรกิจ</option>
                     <% const businessTypes = [
                       'เทคโนโลยี',
@@ -229,22 +232,22 @@
                   <% } %>
                 </div>
 
-                <div class="field">
-                  <label for="contactName">ชื่อผู้ติดต่อ <em>*</em></label>
+                <div class="field col-12 col-md-6">
+                  <label for="contactName" class="form-label">ชื่อผู้ติดต่อ <em>*</em></label>
                   <input
                     id="contactName"
                     name="contactName"
                     value="<%= values.contactName || '' %>"
                     placeholder="ชื่อ-นามสกุล"
-                    required
+                    required class="form-control"
                   >
                   <% if (errors.contactName) { %>
                     <small class="field-error"><%= errors.contactName %></small>
                   <% } %>
                 </div>
 
-                <div class="field">
-                  <label for="phone">เบอร์โทร <em>*</em></label>
+                <div class="field col-12 col-md-6">
+                  <label for="phone" class="form-label">เบอร์โทร <em>*</em></label>
                   <input
                     id="phone"
                     name="phone"
@@ -252,22 +255,22 @@
                     value="<%= values.phone || '' %>"
                     placeholder="08X XXX XXXX"
                     required
-                    autocomplete="tel"
+                    autocomplete="tel" class="form-control"
                   >
                   <% if (errors.phone) { %>
                     <small class="field-error"><%= errors.phone %></small>
                   <% } %>
                 </div>
 
-                <div class="field full">
-                  <label for="contactEmail">อีเมลติดต่อ <em>*</em></label>
+                <div class="field col-12">
+                  <label for="contactEmail" class="form-label">อีเมลติดต่อ <em>*</em></label>
                   <input
                     id="contactEmail"
                     name="contactEmail"
                     type="email"
                     value="<%= values.contactEmail || '' %>"
                     placeholder="contact@company.com"
-                    required
+                    required class="form-control"
                   >
                   <% if (errors.contactEmail) { %>
                     <small class="field-error"><%= errors.contactEmail %></small>
@@ -277,39 +280,39 @@
             <% } else { %>
               <!-- ข้อมูลส่วนตัวของผู้สมัครงาน -->
               <div class="section-title">ข้อมูลส่วนตัว</div>
-              <div class="fields two-col">
-                <div class="field">
-                  <label for="firstName">ชื่อ <em>*</em></label>
+              <div class="row g-3">
+                <div class="field col-12 col-md-6">
+                  <label for="firstName" class="form-label">ชื่อ <em>*</em></label>
                   <input
                     id="firstName"
                     name="firstName"
                     value="<%= values.firstName || '' %>"
                     placeholder="ชื่อจริง"
                     required
-                    autocomplete="given-name"
+                    autocomplete="given-name" class="form-control"
                   >
                   <% if (errors.firstName) { %>
                     <small class="field-error"><%= errors.firstName %></small>
                   <% } %>
                 </div>
 
-                <div class="field">
-                  <label for="lastName">นามสกุล <em>*</em></label>
+                <div class="field col-12 col-md-6">
+                  <label for="lastName" class="form-label">นามสกุล <em>*</em></label>
                   <input
                     id="lastName"
                     name="lastName"
                     value="<%= values.lastName || '' %>"
                     placeholder="นามสกุล"
                     required
-                    autocomplete="family-name"
+                    autocomplete="family-name" class="form-control"
                   >
                   <% if (errors.lastName) { %>
                     <small class="field-error"><%= errors.lastName %></small>
                   <% } %>
                 </div>
 
-                <div class="field full">
-                  <label for="email">อีเมล <em>*</em></label>
+                <div class="field col-12">
+                  <label for="email" class="form-label">อีเมล <em>*</em></label>
                   <input
                     id="email"
                     name="email"
@@ -317,7 +320,7 @@
                     value="<%= values.email || '' %>"
                     placeholder="you@example.com"
                     required
-                    autocomplete="email"
+                    autocomplete="email" class="form-control"
                   >
                   <% if (errors.email) { %>
                     <small class="field-error"><%= errors.email %></small>
@@ -340,13 +343,13 @@
               </div>
             <% } %>
 
-            <label class="terms">
+            <label class="terms form-label">
               <input
                 type="checkbox"
                 name="termsAccepted"
                 value="yes"
                 required
-                <%= values.termsAccepted ? 'checked' : '' %>
+                <%= values.termsAccepted ? 'checked' : '' %> class="form-check-input"
               >
               <span>ฉันยอมรับ<a href="#terms"> เงื่อนไขการใช้บริการ</a>และ<a href="#privacy">นโยบายความเป็นส่วนตัว</a></span>
             </label>
@@ -355,21 +358,10 @@
               <small class="field-error terms-error"><%= errors.termsAccepted %></small>
             <% } %>
 
-            <button class="submit-button" type="submit">
+            <button class="submit-button btn btn-primary" type="submit">
               <span class="submit-icon" aria-hidden="true"><%= role === 'company' ? '▦' : '♙' %></span>สมัครสมาชิกสำหรับ<%= role === 'company' ? 'บริษัท' : 'ผู้สมัครงาน' %>
             </button>
           </form>
-
-          <div class="divider"><span>หรือลงทะเบียนด้วย</span></div>
-
-          <div class="oauth-row">
-            <a class="oauth" href="/auth/google?from=register">
-              <span class="google-g">G</span>Google
-            </a>
-            <a class="oauth" href="/auth/github?from=register">
-              <%- include('../partials/github-icon') %>GitHub
-            </a>
-          </div>
 
           <p class="login-prompt" id="login">
             เป็นสมาชิกอยู่แล้ว? <a href="/login">เข้าสู่ระบบ</a>
@@ -380,12 +372,8 @@
         </div>
       </section>
     </main>
-
-    <!-- Firebase SDK สำหรับ Google และ GitHub Sign-In -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="/JS/firebase-auth.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script src="/JS/navbar.js" defer></script>
-    <script src="/js/register.js" defer></script>
+    <script src="/JS/register.js" defer></script>
   </body>
 </html>

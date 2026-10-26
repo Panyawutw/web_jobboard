@@ -1,46 +1,141 @@
-<header class="navbar">
-    <div class="nav-container">
-        <!-- Logo -->
-        <a href="/" class="nav-logo">Freelance<span class="logo-accent">Hub</span></a>
+<%
+  // ── ตัวแปรที่ใช้ใน Navbar ────────────────────────────────────────
+  // accountName และ accountRole ส่งมาจาก controller ทุก route
 
-        <!-- ปุ่มแฮมเบอร์เกอร์สำหรับหน้าจอมือถือ -->
-        <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation">
-            <span class="hamburger"></span>
-        </button>
+  var isLoggedIn = typeof accountName !== 'undefined' && accountName;
+  var role       = typeof accountRole !== 'undefined' ? String(accountRole).toLowerCase() : '';
 
-        <!-- แถบเมนูนำทาง -->
-        <div class="nav-wrapper" id="navWrapper">
-            <ul class="nav-menu">
-                <li><a href="/" class="nav-link">ค้นหางาน</a></li>
-                <li><a href="/#job-form-section" class="nav-link">เพิ่มงานใหม่</a></li>
-                <li><a href="/history" class="nav-link">ประวัติการทำงาน</a></li>
-            </ul>
+  // แปลงชื่อ role เป็นภาษาไทยสำหรับแสดงบน badge
+  var roleLabels = {
+    jobseeker : 'ผู้สมัครงาน',
+    company   : 'บริษัท',
+    staff     : 'เจ้าหน้าที่',
+    admin     : 'ผู้ดูแลระบบ'
+  };
+  var roleLabel = roleLabels[role] || 'สมาชิก';
 
-            <div class="nav-right">
-                <% if (typeof accountName !== 'undefined' && accountName) { %>
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <span class="text-muted">ยินดีต้อนรับ:</span>
-                        <span class="text-bold" style="color: #2563EB;"><%= accountName %></span>
-                        <span class="divider"></span>
-                        <form action="/logout" method="post" style="display: inline; margin: 0;">
-                            <button type="submit" style="background: none; border: none; color: #DC2626; cursor: pointer; font-size: 14px; text-decoration: underline; padding: 0 4px; font-family: inherit;">ออกจากระบบ</button>
-                        </form>
-                    </div>
-                <% } else { %>
-                    <!-- ข้อมูลผู้ใช้เมื่อเข้าสู่ระบบผ่าน client-side token -->
-                    <div id="user-session" hidden style="display: flex; align-items: center; gap: 12px;">
-                        <span class="text-muted">ยินดีต้อนรับ:</span>
-                        <span id="user-info" class="text-bold" style="color: #2563EB;"></span>
-                    </div>
+  // สีของ badge ตาม role (ดู CSS class ใน navbar.css)
+  var roleClasses = {
+    jobseeker : 'badge-seeker',
+    company   : 'badge-company',
+    staff     : 'badge-staff',
+    admin     : 'badge-admin'
+  };
+  var roleClass = roleClasses[role] || 'badge-seeker';
 
-                    <!-- ลิงก์เข้าสู่ระบบ / สมัครสมาชิก เมื่อยังไม่ล็อกอิน -->
-                    <div id="auth-links" style="display: flex; align-items: center; gap: 16px;">
-                        <a href="/login" class="nav-link text-bold">เข้าสู่ระบบ</a>
-                        <span class="divider"></span>
-                        <a href="/register" class="btn-register">สมัครสมาชิก</a>
-                    </div>
-                <% } %>
+  // ตัวอักษรแรกของชื่อสำหรับ Avatar
+  var avatarLetter = isLoggedIn ? accountName.charAt(0).toUpperCase() : 'G';
+%>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- Navbar: แถบเมนูด้านบน (Bootstrap 5 Navbar)               -->
+<!-- sticky-top = ติดด้านบนขณะเลื่อน scroll                   -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<nav class="navbar navbar-expand-lg fh-navbar sticky-top" aria-label="FreelanceHub main navigation">
+  <div class="container-xl">
+
+    <!-- โลโก้ / ชื่อเว็บ -->
+    <a href="/" class="navbar-brand fh-brand" aria-label="FreelanceHub หน้าหลัก">
+      Freelance<span>Hub</span>
+    </a>
+
+    <!-- ปุ่ม Hamburger สำหรับมือถือ (แสดงเมื่อหน้าจอเล็กกว่า lg) -->
+    <button
+      class="navbar-toggler fh-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#fhNavMenu"
+      aria-controls="fhNavMenu"
+      aria-expanded="false"
+      aria-label="Toggle navigation">
+      <span class="fh-toggler-bar"></span>
+      <span class="fh-toggler-bar"></span>
+      <span class="fh-toggler-bar"></span>
+    </button>
+
+    <!-- เมนูที่ซ่อน/แสดงได้ (collapse บนมือถือ, แสดงเต็มบน desktop) -->
+    <div class="collapse navbar-collapse" id="fhNavMenu">
+
+      <!-- เมนูตรงกลาง -->
+      <ul class="navbar-nav mx-auto fh-nav-links gap-1">
+
+        <!-- เมนูหางาน: แสดงทุกคน -->
+        <li class="nav-item">
+          <a href="/" class="nav-link fh-nav-link">
+            <i class="bi bi-search me-1"></i>หางาน
+          </a>
+        </li>
+
+        <!-- เมนูเฉพาะ JobSeeker: ดูใบสมัครของตัวเอง -->
+        <% if (isLoggedIn && role === 'jobseeker') { %>
+          <li class="nav-item">
+            <a href="/seeker/dashboard" class="nav-link fh-nav-link">
+              <i class="bi bi-file-text me-1"></i>ใบสมัครของฉัน
+            </a>
+          </li>
+        <% } %>
+
+        <!-- เมนูเฉพาะ Company: จัดการงานและลงประกาศ -->
+        <% if (isLoggedIn && role === 'company') { %>
+          <li class="nav-item">
+            <a href="/company/jobs" class="nav-link fh-nav-link">
+              <i class="bi bi-briefcase me-1"></i>งานของบริษัท
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/company/post-job" class="nav-link fh-nav-link fh-post-btn">
+              <i class="bi bi-plus-lg me-1"></i>ลงประกาศงาน
+            </a>
+          </li>
+        <% } %>
+
+        <!-- เมนูเฉพาะ Staff/Admin: จัดการและตรวจสอบงาน -->
+        <% if (isLoggedIn && (role === 'staff' || role === 'admin')) { %>
+          <li class="nav-item">
+            <a href="/moderator/jobs" class="nav-link fh-nav-link">
+              <i class="bi bi-gear me-1"></i>จัดการงาน
+            </a>
+          </li>
+        <% } %>
+
+        <!-- เมนูเฉพาะ Admin: แผงควบคุมผู้ดูแลระบบ -->
+        <% if (isLoggedIn && role === 'admin') { %>
+          <li class="nav-item">
+            <a href="/admin/dashboard" class="nav-link fh-nav-link">
+              <i class="bi bi-shield-check me-1"></i>แผงผู้ดูแล
+            </a>
+          </li>
+        <% } %>
+
+      </ul>
+
+      <!-- ส่วนขวา: ปุ่ม Login/Logout + ข้อมูลผู้ใช้ -->
+      <div class="fh-nav-right d-flex align-items-center gap-2">
+
+        <!-- ถ้าล็อกอินแล้ว: แสดง Avatar + ชื่อ + ปุ่มออกจากระบบ -->
+        <% if (isLoggedIn) { %>
+          <div class="fh-user-chip d-flex align-items-center gap-2">
+            <!-- วงกลมตัวอักษรแรกของชื่อ -->
+            <div class="fh-avatar"><%= avatarLetter %></div>
+            <!-- ข้อมูลเพิ่มเติม (ซ่อนบนมือถือ) -->
+            <div class="fh-user-info d-none d-md-flex flex-column">
+              <span class="fh-role-badge <%= roleClass %>"><%= roleLabel %></span>
+              <span class="fh-username"><%= accountName %></span>
             </div>
-        </div>
-    </div>
-</header>
+          </div>
+          <!-- ปุ่ม Logout ส่ง POST ไปที่ /logout -->
+          <form action="/logout" method="post" class="m-0">
+            <button type="submit" class="btn fh-btn-logout">ออกจากระบบ</button>
+          </form>
+
+        <!-- ถ้ายังไม่ล็อกอิน: แสดงปุ่ม Login และ Register -->
+        <% } else { %>
+          <a href="/login"    class="btn fh-btn-login">เข้าสู่ระบบ</a>
+          <a href="/register" class="btn fh-btn-register">สมัครสมาชิก</a>
+        <% } %>
+
+      </div><!-- /.fh-nav-right -->
+
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-xl -->
+</nav>

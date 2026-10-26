@@ -3,30 +3,32 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f2ee">
-    <title>เข้าสู่ระบบ | ก้าว</title>
+    <meta name="theme-color" content="#F2F2F7">
+    <title>เข้าสู่ระบบ - FreelanceHub</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     >
-    <link rel="stylesheet" href="/css/navbar.css">
-    <link rel="stylesheet" href="/css/login.css?v=8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/navbar.css?v=14">
+    <link rel="stylesheet" href="/css/login.css?v=12">
+      <link rel="stylesheet" href="/css/ios-theme.css?v=4">
   </head>
 
   <body>
     <%- include('../partials/navbar') %>
-    <main class="login-page">
-      <section class="login-card" aria-labelledby="login-title">
+    <main class="login-page container-fluid">
+      <section class="login-card card" aria-labelledby="login-title">
         <h1 id="login-title">เข้าสู่ระบบ</h1>
         <p class="intro">
           ยินดีต้อนรับกลับสู่เครือข่ายมืออาชีพ<br class="desktop-break">
           เพื่อโอกาสทางอาชีพและธุรกิจของคุณ
         </p>
 
-        <% if (errors.form) { %>
+        <% if (errors && errors.form) { %>
           <div class="message error" role="alert"><%= errors.form %></div>
         <% } %>
 
@@ -39,17 +41,13 @@
           </div>
         <% } %>
 
-        <% if (typeof accountRole !== 'undefined' && accountRole) { %>
-          <form action="/logout" method="post">
-            <button class="logout-button" type="submit">ออกจากระบบ</button>
-          </form>
-        <% } %>
+        <!-- ฟอร์มเข้าสู่ระบบ -->
+        <form class="login-form" action="/login" method="post" id="login-form">
+          <input type="hidden" name="returnTo" value="<%= typeof returnTo !== 'undefined' && returnTo ? returnTo : '' %>">
 
-        <!-- ส่งอีเมล/ชื่อผู้ใช้และรหัสผ่านให้ Auth Controller ตรวจสอบ -->
-        <form class="login-form" action="/login" method="post">
           <div class="field-head">
-            <label for="identifier">อีเมลหรือชื่อผู้ใช้</label>
-            <% if (errors.identifier) { %>
+            <label for="identifier" class="form-label">อีเมลหรือชื่อผู้ใช้</label>
+            <% if (errors && errors.identifier) { %>
               <small class="error-text"><%= errors.identifier %></small>
             <% } %>
           </div>
@@ -59,15 +57,15 @@
             <input
               id="identifier"
               name="identifier"
-              value="<%= values.identifier || '' %>"
+              value="<%= values && values.identifier ? values.identifier : '' %>"
               placeholder="เช่น name@example.com หรือ username"
               autocomplete="username"
-              required
+              required class="form-control"
             >
           </div>
 
           <div class="password-head">
-            <label for="password">รหัสผ่าน</label>
+            <label for="password" class="form-label">รหัสผ่าน</label>
             <a href="/forgot-password">
               ลืมรหัสผ่าน?
             </a>
@@ -84,11 +82,11 @@
               type="password"
               placeholder="กรอกรหัสผ่านของคุณ"
               autocomplete="current-password"
-              required
+              required class="form-control"
             >
             <button
               type="button"
-              class="password-toggle"
+              class="password-toggle btn"
               aria-label="แสดงรหัสผ่าน"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -99,13 +97,13 @@
             </button>
           </div>
 
-          <% if (errors.password) { %>
+          <% if (errors && errors.password) { %>
             <small class="error-text"><%= errors.password %></small>
           <% } %>
 
           <div class="form-options">
-            <label class="remember">
-              <input type="checkbox" name="remember" value="yes">
+            <label class="remember form-label">
+              <input type="checkbox" name="remember" value="yes" class="form-check-input">
               <span>จดจำฉันไว้ในระบบ</span>
             </label>
 
@@ -118,33 +116,16 @@
             </span>
           </div>
 
-          <button type="submit" class="login-button">
+          <button type="submit" class="login-button btn btn-primary">
             เข้าสู่ระบบ <span aria-hidden="true">→</span>
           </button>
         </form>
-
-        <div class="divider"><span>หรือเข้าสู่ระบบด้วย</span></div>
-
-        <div class="oauth-row">
-          <a href="/auth/google?from=login" class="oauth-button">
-            <span class="google-icon">G</span>Google
-          </a>
-          <a href="/auth/github?from=login" class="oauth-button">
-            <%- include('../partials/github-icon') %>GitHub
-          </a>
-        </div>
-
         <div class="register-prompt">
           ยังไม่มีบัญชีผู้ใช้? <a href="/register">สมัครสมาชิกใหม่</a>
         </div>
       </section>
     </main>
-
-    <!-- Firebase SDK สำหรับ Google และ GitHub Sign-In -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="/JS/firebase-auth.js" defer></script>
-    <script src="/JS/navbar.js" defer></script>
-    <script src="/js/login.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="/JS/login.js" defer></script>
   </body>
 </html>

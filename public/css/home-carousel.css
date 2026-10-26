@@ -1,0 +1,171 @@
+.job-search-hero {
+  margin-bottom: 16px !important;
+  padding: 18px 0 10px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #0f172a !important;
+}
+
+.job-search-hero h1 {
+  color: #0f172a !important;
+}
+
+.job-search-hero p {
+  color: #6e6e73 !important;
+}
+
+.job-search-categories > span {
+  color: #6e6e73 !important;
+}
+
+.job-search-categories > a {
+  border: 1px solid #e5e5ea !important;
+  background: #f2f2f7 !important;
+  color: #1c1c1e !important;
+}
+
+.job-search-categories > a:hover {
+  border-color: #007aff !important;
+  background: #eaf3ff !important;
+  color: #0062cc !important;
+}
+
+.job-search-form {
+  gap: 10px !important;
+  padding: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  border-radius: 24px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18) !important;
+}
+
+#job-search-form input,
+#job-search-form select {
+  min-height: 48px !important;
+  border: 1px solid #e5e5ea !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+#job-search-form input:focus,
+#job-search-form select:focus {
+  border-color: #007aff !important;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.14) !important;
+}
+
+#job-search-form button {
+  min-height: 48px;
+  border-radius: 16px !important;
+}
+
+.job-card-item {
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.job-card-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 122, 255, 0.32) !important;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12) !important;
+}
+
+.job-card-main-link::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+}
+
+.job-card-main-link:focus-visible::after {
+  outline: 3px solid rgba(0, 122, 255, 0.75);
+  outline-offset: 3px;
+}
+
+.freelancehub-banner-wrap {
+  position: relative;
+  margin: 0 0 24px;
+  overflow: hidden;
+  border: 1px solid rgba(60, 60, 67, 0.12);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+}
+
+#freelancehub-job-banner,
+#freelancehub-job-banner .carousel-inner,
+#freelancehub-job-banner .carousel-item {
+  width: 100%;
+}
+
+#freelancehub-job-banner .carousel-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  object-fit: contain;
+  background: #fff;
+}
+
+#freelancehub-job-banner .carousel-indicators {
+  margin-bottom: 12px;
+}
+
+#freelancehub-job-banner .carousel-indicators button {
+  width: 22px;
+  height: 4px;
+  margin: 0 4px;
+  border: 0;
+  border-radius: 999px;
+}
+
+#freelancehub-job-banner .carousel-control-prev,
+#freelancehub-job-banner .carousel-control-next {
+  width: 9%;
+  opacity: 1;
+}
+
+#freelancehub-job-banner .carousel-control-prev-icon,
+#freelancehub-job-banner .carousel-control-next-icon {
+  width: 38px;
+  height: 38px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  background-color: rgba(15, 23, 42, 0.5);
+  background-size: 16px;
+  backdrop-filter: blur(12px);
+}
+
+.banner-pause {
+  position: absolute;
+  z-index: 5;
+  top: 12px;
+  right: 12px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+}
+
+.banner-pause:hover,
+.banner-pause:focus-visible {
+  background: rgba(0, 122, 255, 0.9);
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .freelancehub-banner-wrap { border-radius: 14px; }
+  #freelancehub-job-banner .carousel-control-prev-icon,
+  #freelancehub-job-banner .carousel-control-next-icon { width: 32px; height: 32px; }
+  .banner-pause { top: 8px; right: 8px; min-height: 30px; font-size: 11px; }
+}

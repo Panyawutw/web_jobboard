@@ -1,0 +1,71 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 800px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="margin-bottom: 24px;">
+        <a href="/app/jobs" style="color: #64748B; font-size: 13px; text-decoration: none;">&larr; กลับไปยังรายการงาน</a>
+        <h1 style="text-align: left; margin: 8px 0 0 0; color: #1E293B;">📝 ส่งคำขอเพิ่มงานใหม่ (Submit Job Request)</h1>
+        <p style="color: #64748B; margin-top: 4px;">กรอกรายละเอียดงานและแนบไฟล์ประกอบคำขอ (ผ่านการตรวจสิทธิ์และตรวจประเภทไฟล์ฝั่ง Server)</p>
+    </div>
+
+    <% if (errors && errors.form) { %>
+        <div style="background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
+            <%= errors.form %>
+        </div>
+    <% } %>
+
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 24px;">
+        <form method="POST" action="/app/jobs/new" enctype="multipart/form-data">
+            <div>
+                <label style="font-weight: 600; font-size: 14px; color: #1E293B;" class="form-label">ชื่องาน / คำขอ *</label>
+                <input type="text" name="title" required value="<%= job ? job.title : '' %>" placeholder="เช่น ออกแบบหน้าเว็บ Dashboard สำหรับระบบจองคิว" class="form-control">
+            </div>
+
+            <div style="grid-template-columns: 1fr 1fr;" class="d-grid gap-3">
+                <div>
+                    <label style="font-weight: 600; font-size: 14px; color: #1E293B;" class="form-label">หมวดหมู่งาน *</label>
+                    <select name="category" required class="form-select">
+                        <option value="Web Development" <%= job && job.category === 'Web Development' ? 'selected' : '' %>>Web Development</option>
+                        <option value="Design" <%= job && job.category === 'Design' ? 'selected' : '' %>>Design (UI/UX)</option>
+                        <option value="Android" <%= job && job.category === 'Android' ? 'selected' : '' %>>Mobile App / Android</option>
+                        <option value="Data Analyst" <%= job && job.category === 'Data Analyst' ? 'selected' : '' %>>Data Analyst</option>
+                        <option value="DevOps" <%= job && job.category === 'DevOps' ? 'selected' : '' %>>DevOps / Cloud</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight: 600; font-size: 14px; color: #1E293B;" class="form-label">งบประมาณ (บาท) *</label>
+                    <input type="number" name="budget" required min="1" value="<%= job ? job.budget : '' %>" placeholder="เช่น 20000" class="form-control">
+                </div>
+            </div>
+
+            <div>
+                <label style="font-weight: 600; font-size: 14px; color: #1E293B;" class="form-label">สถานที่ปฏิบัติงาน *</label>
+                <input type="text" name="location" required value="<%= job ? job.location : 'Remote' %>" placeholder="เช่น Remote หรือ Bangkok" class="form-control">
+            </div>
+
+            <div>
+                <label style="font-weight: 600; font-size: 14px; color: #1E293B;" class="form-label">รายละเอียดงานและขอบเขตงาน (Scope of Work) *</label>
+                <textarea name="description" required rows="5" placeholder="อธิบายเป้าหมายของงาน ความต้องการ และสิ่งที่ต้องส่งมอบ..." class="form-control"><%= job ? job.description : '' %></textarea>
+            </div>
+
+            <div style="background: #F8FAFC; border: 2px dashed #CBD5E1; border-radius: 8px; padding: 20px; margin-top: 10px; margin-bottom: 20px;">
+                <label style="font-weight: 600; font-size: 14px; color: #1E293B; display: block; margin-bottom: 6px;" class="form-label">
+                    📎 แนบเอกสารประกอบคำขอ (File Attachment)
+                </label>
+                <p style="color: #64748B; font-size: 12px; margin: 0 0 10px 0;">
+                    รองรับไฟล์ภาพ (JPG, PNG, WEBP), ไฟล์เอกสาร (PDF, DOCX, TXT) หรือ ZIP ขนาดไม่เกิน 10 MB (ระบบจะตรวจสอบสิทธิ์และป้องกันการเข้าถึงแบบ Direct Static URL)
+                </p>
+                <input type="file" name="file" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp,.zip" style="margin-bottom: 0;" class="form-control">
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;" class="d-flex gap-3 justify-content-end">
+                <a href="/app/jobs" style="background: #E2E8F0; color: #334155; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;" class="btn btn-outline-secondary">ยกเลิก</a>
+                <button type="submit" style="background: #2563EB; color: white; padding: 10px 24px; border-radius: 6px; font-weight: 600;" class="btn btn-primary">
+                    🚀 ส่งคำของาน
+                </button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,11 +1,13 @@
 "use strict";
 
 const { authenticate } = require('../models/accountModel');
+const auditLogger = require('../services/auditLogger');
 
 // แสดงหน้าเข้าสู่ระบบ (GET /login)
 async function showLogin(req, res) {
   const accountName = req.session ? req.session.accountName : null;
   const accountRole = req.session ? req.session.accountRole : null;
+  const returnTo = req.query.returnTo || null;
 
   let success = null;
   if (req.query.welcome === '1') success = 'เข้าสู่ระบบสำเร็จ';
@@ -23,10 +25,11 @@ async function showLogin(req, res) {
   }
 
   res.render('pages/login', {
-    title: 'เข้าสู่ระบบ | ก้าว - FreelanceHub',
+    title: 'เข้าสู่ระบบ - FreelanceHub',
     values: {},
     errors,
     success,
+    returnTo,
     accountName: accountName || null,
     accountRole: accountRole || null
   });
@@ -40,6 +43,7 @@ async function login(req, res, next) {
   const password = typeof req.body.password === 'string'
     ? req.body.password
     : '';
+  const returnTo = typeof req.body.returnTo === 'string' ? req.body.returnTo : req.query.returnTo;
   const errors = {};
 
   if (!identifier) errors.identifier = 'กรุณากรอกอีเมลหรือชื่อผู้ใช้';
@@ -47,10 +51,11 @@ async function login(req, res, next) {
 
   if (Object.keys(errors).length > 0) {
     return res.status(422).render('pages/login', {
-      title: 'เข้าสู่ระบบ | ก้าว - FreelanceHub',
+      title: 'เข้าสู่ระบบ - FreelanceHub',
       values: { identifier },
       errors,
       success: null,
+      returnTo: returnTo || null,
       accountName: null,
       accountRole: null
     });
@@ -60,11 +65,23 @@ async function login(req, res, next) {
     const account = await authenticate(identifier, password);
 
     if (!account) {
+      await auditLogger.logEvent({
+        userId: null,
+        usernameOrEmail: identifier,
+        ipAddress: req.ip,
+        eventType: 'AUTH_LOGIN_FAILED',
+        resource: '/login',
+        action: 'POST',
+        status: 'FAILED',
+        details: { attemptedIdentifier: identifier, reason: 'Invalid credentials' }
+      });
+
       return res.status(401).render('pages/login', {
-        title: 'เข้าสู่ระบบ | ก้าว - FreelanceHub',
+        title: 'เข้าสู่ระบบ - FreelanceHub',
         values: { identifier },
         errors: { form: 'อีเมล/ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
         success: null,
+        returnTo: returnTo || null,
         accountName: null,
         accountRole: null
       });
@@ -84,13 +101,41 @@ async function login(req, res, next) {
           ? 30 * 24 * 60 * 60 * 1000
           : 8 * 60 * 60 * 1000;
 
-        req.session.save((saveError) => {
+        req.session.save(async (saveError) => {
           if (saveError) return next(saveError);
-          return res.redirect('/');
+
+          await auditLogger.logEvent({
+            userId: account.id,
+            usernameOrEmail: account.email,
+            ipAddress: req.ip,
+            eventType: 'AUTH_LOGIN_SUCCESS',
+            resource: '/login',
+            action: 'POST',
+            status: 'SUCCESS',
+            details: { role: account.role, name: account.name }
+          });
+
+          // หากมีคำขอส่งกลับไปยังหน้าที่เปิดดูค้างไว้ (เช่น /jobs/1)
+          if (returnTo && returnTo.startsWith('/')) {
+            return res.redirect(returnTo);
+          }
+
+          // Redirect to single page depending on role
+          const roleLower = String(account.role).toLowerCase();
+          if (roleLower === 'admin') {
+            return res.redirect('/admin');
+          }
+          if (roleLower === 'company') {
+            return res.redirect('/company');
+          }
+          if (roleLower === 'staff') {
+            return res.redirect('/moderator');
+          }
+          return res.redirect('/seeker');
         });
       });
     } else {
-      return res.redirect('/');
+      return res.redirect(returnTo && returnTo.startsWith('/') ? returnTo : '/');
     }
   } catch (error) {
     return next(error);
@@ -99,12 +144,26 @@ async function login(req, res, next) {
 
 // ออกจากระบบ (POST /logout)
 async function logout(req, res, next) {
+  const accountId = req.session?.accountId;
+  const email = req.session?.email || req.session?.accountName;
+
   if (!req.session) {
     return res.redirect('/login');
   }
 
-  req.session.destroy((error) => {
+  req.session.destroy(async (error) => {
     if (error) return next(error);
+
+    await auditLogger.logEvent({
+      userId: accountId,
+      usernameOrEmail: email,
+      ipAddress: req.ip,
+      eventType: 'AUTH_LOGOUT',
+      resource: '/logout',
+      action: 'POST',
+      status: 'SUCCESS',
+      details: { message: 'User logged out successfully' }
+    });
 
     res.clearCookie('jobboard.sid', {
       httpOnly: true,

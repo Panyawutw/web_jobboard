@@ -29,22 +29,35 @@ async function authenticateToken(req, res, next) {
                 return res.status(401).json({ error: 'Token ไม่ถูกต้อง' });
             }
 
-            // ค้นหาผู้ใช้จากตาราง accounts หรือ users
-            const result = await pool.query(
-                `SELECT accounts.id, accounts.email, accounts.role,
-                        COALESCE(job_seekers.first_name || ' ' || job_seekers.last_name, companies.company_name, accounts.email) AS name
-                 FROM accounts
-                 LEFT JOIN job_seekers ON job_seekers.account_id = accounts.id
-                 LEFT JOIN companies ON companies.account_id = accounts.id
-                 WHERE accounts.id = $1`,
-                [payload.sub]
-            );
+            // ค้นหาผู้ใช้จากตาราง accounts หรือ users พร้อม fallback
+            const userModel = require('../models/userModel');
+            let user = null;
+            try {
+                const result = await pool.query(
+                    `SELECT accounts.id, accounts.email, accounts.role,
+                            COALESCE(job_seekers.first_name || ' ' || job_seekers.last_name,
+                                     companies.company_name, companies.username, accounts.email) AS name
+                     FROM accounts
+                     LEFT JOIN job_seekers ON job_seekers.account_id = accounts.id
+                     LEFT JOIN companies ON companies.account_id = accounts.id
+                     WHERE accounts.id = $1`,
+                    [payload.sub]
+                );
+                if (result.rows.length > 0) {
+                    user = result.rows[0];
+                }
+            } catch (dbErr) {
+                user = await userModel.findUserById(payload.sub);
+            }
 
-            if (result.rows.length === 0) {
+            if (!user) {
+                user = await userModel.findUserById(payload.sub);
+            }
+
+            if (!user) {
                 return res.status(401).json({ error: 'ไม่พบบัญชีผู้ใช้' });
             }
 
-            const user = result.rows[0];
             req.userId = String(user.id);
             req.user = {
                 id: user.id,

@@ -84,9 +84,9 @@ async function showRegister(req, res) {
 
   const errors = {};
   if (req.query.error === 'google_missing_client_id') {
-    errors.form = '⚠️ ยังไม่ได้ระบุ GOOGLE_CLIENT_ID ในไฟล์ .env (กรุณานำ Client ID จาก Google Cloud Console มาใส่)';
+    errors.form = 'ยังไม่ได้ตั้งค่าการสมัครผ่าน Google คุณยังสมัครด้วยแบบฟอร์มด้านล่างได้';
   } else if (req.query.error === 'github_missing_client_id') {
-    errors.form = '⚠️ ยังไม่ได้ระบุ GITHUB_CLIENT_ID ในไฟล์ .env (กรุณานำ Client ID จาก GitHub Developer Settings มาใส่)';
+    errors.form = 'ยังไม่ได้ตั้งค่าการสมัครผ่าน GitHub คุณยังสมัครด้วยแบบฟอร์มด้านล่างได้';
   } else if (req.query.error === 'oauth_failed') {
     errors.form = 'การยืนยันตัวตนผ่าน OAuth ล้มเหลว กรุณาลองใหม่อีกครั้ง';
   } else if (req.query.error === 'oauth_denied') {
@@ -94,7 +94,7 @@ async function showRegister(req, res) {
   }
 
   res.render('pages/register', {
-    title: 'สมัครสมาชิก | ก้าว - FreelanceHub',
+    title: 'สมัครสมาชิก | FreelanceHub',
     role,
     values: {},
     errors,
@@ -103,13 +103,33 @@ async function showRegister(req, res) {
   });
 }
 
+function startCompanySession(req, res, next, accountId, values) {
+  if (!req.session) {
+    return res.redirect('/login?welcome=1');
+  }
+
+  req.session.regenerate((error) => {
+    if (error) return next(error);
+
+    req.session.accountId = accountId;
+    req.session.accountRole = 'company';
+    req.session.accountName = values.companyName.trim();
+    req.session.email = values.accountEmail.trim().toLowerCase();
+    req.session.cookie.maxAge = 8 * 60 * 60 * 1000;
+
+    req.session.save((saveError) => {
+      if (saveError) return next(saveError);
+      return res.redirect('/company');
+    });
+  });
+}
 // รับคำขอสมัครสมาชิกจากแบบฟอร์ม (POST /register)
 async function register(req, res, next) {
   const { role, values, errors } = validate(req.body);
 
   if (Object.keys(errors).length > 0) {
     return res.status(422).render('pages/register', {
-      title: 'สมัครสมาชิก | ก้าว - FreelanceHub',
+      title: 'สมัครสมาชิก | FreelanceHub',
       role: role || 'jobSeeker',
       values,
       errors,
@@ -118,30 +138,33 @@ async function register(req, res, next) {
   }
 
   try {
-    // ตรวจสอบอีเมลซ้ำในระบบ
-    const emails = role === 'company'
-      ? [values.accountEmail, values.contactEmail]
-      : [values.email];
-
-    for (const email of emails) {
-      if (await emailExists(email)) {
-        return res.status(409).render('pages/register', {
-          title: 'สมัครสมาชิก | ก้าว - FreelanceHub',
-          role,
-          values,
-          errors: {
-            accountEmail: 'อีเมลนี้มีบัญชีในระบบแล้ว',
-            email: 'อีเมลนี้มีบัญชีในระบบแล้ว'
-          },
-          success: null
-        });
+    // ตรวจสอบอีเมลแยกตามช่อง เพื่อแจ้งตำแหน่งที่ซ้ำได้ถูกต้อง
+    const duplicateEmailErrors = {};
+    if (role === 'company') {
+      if (await emailExists(values.accountEmail)) {
+        duplicateEmailErrors.accountEmail = 'อีเมลบัญชีนี้มีอยู่ในระบบแล้ว';
       }
+      if (await emailExists(values.contactEmail)) {
+        duplicateEmailErrors.contactEmail = 'อีเมลติดต่อนี้มีบัญชีในระบบแล้ว';
+      }
+    } else if (await emailExists(values.email)) {
+      duplicateEmailErrors.email = 'อีเมลนี้มีบัญชีในระบบแล้ว';
+    }
+
+    if (Object.keys(duplicateEmailErrors).length > 0) {
+      return res.status(409).render('pages/register', {
+        title: 'สมัครสมาชิก | FreelanceHub',
+        role,
+        values,
+        errors: duplicateEmailErrors,
+        success: null
+      });
     }
 
     // ตรวจสอบ username ซ้ำสำหรับบัญชีบริษัท
     if (role === 'company' && (await usernameExists(values.username))) {
       return res.status(409).render('pages/register', {
-        title: 'สมัครสมาชิก | ก้าว - FreelanceHub',
+        title: 'สมัครสมาชิก | FreelanceHub',
         role,
         values,
         errors: {
@@ -153,13 +176,14 @@ async function register(req, res, next) {
 
     // บันทึกลง PostgreSQL ตาม Role
     if (role === 'company') {
-      await createCompany(values);
-    } else {
-      await createJobSeeker(values);
+      const accountId = await createCompany(values);
+      return startCompanySession(req, res, next, accountId, values);
     }
 
+    await createJobSeeker(values);
+
     return res.status(201).render('pages/register', {
-      title: 'สมัครสมาชิกสำเร็จ | ก้าว - FreelanceHub',
+      title: 'สมัครสมาชิกสำเร็จ | FreelanceHub',
       role,
       values: {},
       errors: {},
@@ -169,7 +193,7 @@ async function register(req, res, next) {
     // Postgre error 23505 = unique_violation
     if (error.code === '23505') {
       return res.status(409).render('pages/register', {
-        title: 'สมัครสมาชิก | ก้าว - FreelanceHub',
+        title: 'สมัครสมาชิก | FreelanceHub',
         role,
         values,
         errors: {
@@ -190,7 +214,7 @@ function oauthNotConfigured(req, res) {
 
   if (req.query.from === 'login') {
     return res.status(501).render('pages/login', {
-      title: 'เข้าสู่ระบบ | ก้าว - FreelanceHub',
+      title: 'เข้าสู่ระบบ | FreelanceHub',
       values: {},
       errors: { form: message },
       success: null,
@@ -200,7 +224,7 @@ function oauthNotConfigured(req, res) {
   }
 
   return res.status(501).render('pages/register', {
-    title: 'สมัครสมาชิก | ก้าว - FreelanceHub',
+    title: 'สมัครสมาชิก | FreelanceHub',
     role: 'jobSeeker',
     values: {},
     errors: { form: message },

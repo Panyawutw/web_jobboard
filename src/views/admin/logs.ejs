@@ -1,0 +1,127 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1200px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="margin-bottom: 20px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B;">📜 ประวัติการใช้งานระบบ (Audit Logs)</h1>
+            <p style="color: #64748B; margin-top: 4px;">เก็บบันทึกถาวรลง PostgreSQL: การ Login, การจัดการสิทธิ์, การเข้าถึงไฟล์ และเหตุการณ์ที่ถูกปฏิเสธ (Access Denied)</p>
+        </div>
+        <div style="color: #64748B; font-size: 14px;">
+            พบทั้งหมด <strong><%= total %></strong> รายการ
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px; margin-bottom: 20px;">
+        <form method="GET" action="/admin/logs" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: end;" class="d-grid gap-3">
+            <div>
+                <label style="font-size: 13px; font-weight: 500;" class="form-label">ประเภทเหตุการณ์ (Event)</label>
+                <select name="eventType" style="margin-bottom: 0;" class="form-select">
+                    <option value="ALL" <%= filters.eventType === 'ALL' || !filters.eventType ? 'selected' : '' %>>ทั้งหมดทุกประเภท</option>
+                    <option value="AUTH_LOGIN_SUCCESS" <%= filters.eventType === 'AUTH_LOGIN_SUCCESS' ? 'selected' : '' %>>Login สำเร็จ</option>
+                    <option value="AUTH_LOGIN_FAILED" <%= filters.eventType === 'AUTH_LOGIN_FAILED' ? 'selected' : '' %>>Login ล้มเหลว</option>
+                    <option value="AUTH_LOGOUT" <%= filters.eventType === 'AUTH_LOGOUT' ? 'selected' : '' %>>Logout ออกจากระบบ</option>
+                    <option value="ACCESS_DENIED" <%= filters.eventType === 'ACCESS_DENIED' ? 'selected' : '' %>>🚨 ปฏิเสธการเข้าถึง (Access Denied)</option>
+                    <option value="ACL_UPDATE" <%= filters.eventType === 'ACL_UPDATE' ? 'selected' : '' %>>🔑 แก้ไขสิทธิ์ ACL Matrix</option>
+                    <option value="USER_ROLE_CHANGE" <%= filters.eventType === 'USER_ROLE_CHANGE' ? 'selected' : '' %>>เปลี่ยนบทบาทผู้ใช้</option>
+                    <option value="JOB_CREATE" <%= filters.eventType === 'JOB_CREATE' ? 'selected' : '' %>>สร้างงานใหม่</option>
+                    <option value="JOB_UPDATE" <%= filters.eventType === 'JOB_UPDATE' ? 'selected' : '' %>>แก้ไขงาน</option>
+                    <option value="JOB_STATUS_CHANGE" <%= filters.eventType === 'JOB_STATUS_CHANGE' ? 'selected' : '' %>>เปลี่ยนสถานะงาน</option>
+                    <option value="FILE_UPLOAD" <%= filters.eventType === 'FILE_UPLOAD' ? 'selected' : '' %>>อัปโหลดไฟล์</option>
+                    <option value="FILE_DELETE" <%= filters.eventType === 'FILE_DELETE' ? 'selected' : '' %>>ลบไฟล์</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: 500;" class="form-label">ค้นหาผู้ใช้งาน (Email / ID)</label>
+                <input type="text" name="username" value="<%= filters.username || '' %>" placeholder="เช่น admin@jobboard.com" style="margin-bottom: 0;" class="form-control">
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: 500;" class="form-label">ตั้งแต่วันที่</label>
+                <input type="date" name="startDate" value="<%= filters.startDate || '' %>" style="margin-bottom: 0;" class="form-control">
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: 500;" class="form-label">ถึงวันที่</label>
+                <input type="date" name="endDate" value="<%= filters.endDate || '' %>" style="margin-bottom: 0;" class="form-control">
+            </div>
+            <div style="display: flex; gap: 8px;" class="d-flex gap-2">
+                <button type="submit" style="background: #2563EB; color: white; padding: 10px 18px; margin: 0; width: 100%;" class="btn btn-primary">ค้นหา</button>
+                <a href="/admin/logs" style="background: #E2E8F0; color: #334155; padding: 10px 14px; border-radius: 6px; text-decoration: none; text-align: center; display: inline-block;" class="btn btn-outline-secondary">ล้าง</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Logs Table -->
+    <section style="padding: 0; overflow: hidden; border: 1px solid #E2E8F0;">
+        <div style="overflow-x: auto;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;" class="table align-middle">
+                <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
+                        <th style="padding: 10px 14px;">วันเวลา</th>
+                        <th style="padding: 10px 14px;">ผู้กระทำ (Actor)</th>
+                        <th style="padding: 10px 14px;">IP Address</th>
+                        <th style="padding: 10px 14px;">เหตุการณ์ (Event)</th>
+                        <th style="padding: 10px 14px;">ทรัพยากร / Action</th>
+                        <th style="padding: 10px 14px; text-align: center;">สถานะ</th>
+                        <th style="padding: 10px 14px;">รายละเอียด</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!logs || logs.length === 0) { %>
+                        <tr>
+                            <td colspan="7" style="padding: 30px; text-align: center; color: #64748B;">
+                                ไม่พบรายการประวัติการใช้งานที่ตรงกับเงื่อนไข
+                            </td>
+                        </tr>
+                    <% } else { %>
+                        <% logs.forEach(function(log) { %>
+                            <tr style="border-bottom: 1px solid #F1F5F9; <%= log.status === 'DENIED' ? 'background: #FFF5F5;' : '' %>">
+                                <td style="padding: 10px 14px; color: #64748B; white-space: nowrap;">
+                                    <%= new Date(log.created_at).toLocaleString('th-TH') %>
+                                </td>
+                                <td style="padding: 10px 14px; font-weight: 500;">
+                                    <%= log.username_or_email || 'Anonymous' %>
+                                    <% if (log.user_id) { %>
+                                        <span style="color: #94A3B8; font-size: 11px;">(#<%= log.user_id %>)</span>
+                                    <% } %>
+                                </td>
+                                <td style="padding: 10px 14px; font-family: monospace; color: #64748B;"><%= log.ip_address || '-' %></td>
+                                <td style="padding: 10px 14px;">
+                                    <span style="background: <%= log.event_type.includes('DENIED') ? '#FEE2E2' : log.event_type.includes('SUCCESS') ? '#DCFCE7' : '#F1F5F9' %>; color: <%= log.event_type.includes('DENIED') ? '#991B1B' : log.event_type.includes('SUCCESS') ? '#166534' : '#1E293B' %>; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 11px;">
+                                        <%= log.event_type %>
+                                    </span>
+                                </td>
+                                <td style="padding: 10px 14px;">
+                                    <div><code style="font-size: 11px;"><%= log.resource || '-' %></code></div>
+                                    <div style="color: #64748B; font-size: 11px;"><%= log.action || '-' %></div>
+                                </td>
+                                <td style="padding: 10px 14px; text-align: center;">
+                                    <span style="color: <%= log.status === 'SUCCESS' ? '#059669' : log.status === 'DENIED' ? '#DC2626' : '#D97706' %>; font-weight: 700;">
+                                        <%= log.status %>
+                                    </span>
+                                </td>
+                                <td style="padding: 10px 14px; max-width: 300px; overflow-wrap: anywhere; color: #475569; font-size: 12px;">
+                                    <%= log.details || '-' %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } %>
+                </tbody>
+            </table></div>
+        </div>
+    </section>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+        <div style="margin-top: 20px;" class="d-flex justify-content-center gap-2">
+            <% for (let i = 1; i <= totalPages; i++) { %>
+                <a href="/admin/logs?page=<%= i %>&eventType=<%= filters.eventType || '' %>&username=<%= filters.username || '' %>&startDate=<%= filters.startDate || '' %>&endDate=<%= filters.endDate || '' %>"
+                   style="padding: 6px 12px; border-radius: 4px; border: 1px solid #CBD5E1; text-decoration: none; <%= currentPage === i ? 'background: #2563EB; color: white; font-weight: 700;' : 'background: white; color: #334155;' %>" class="btn btn-primary">
+                    <%= i %>
+                </a>
+            <% } %>
+        </div>
+    <% } %>
+</main>
+
+<%- include('../partials/footer') %>

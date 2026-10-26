@@ -1,236 +1,248 @@
+/* ========================================================
+   FreelanceHub Navbar CSS (Bootstrap 5 Compatible)
+   navbar.css
+   ======================================================== */
+
+/* ── CSS Variables ───────────────────────────────────── */
 :root {
-  --primary-color: #0F172A;  
-  --accent-color: #4577ec;   
-  --text-main: #1E293B;      
-  --text-muted: #64748B;     
-  --border-color: #E2E8F0;   
-  --bg-white: #FFFFFF;
+  --fh-primary: #0A66C2;
+  --fh-primary-dark: #004E99;
+  --fh-primary-light: #E7F0F9;
+  --fh-navy: #0F172A;
+  --fh-slate: #1E293B;
+  --fh-muted: #64748B;
+  --fh-border: #E2E8F0;
+  --fh-bg: #FFFFFF;
+  --fh-font: 'Kanit', sans-serif;
 }
 
-/* Navbar Base Style */
-.navbar {
-  background-color: var(--bg-white, #ffffff);
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
-  width: 100%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  position: relative;
-  z-index: 1000;
-  font-family: 'Kanit', Helvetica, sans-serif;
+/* ── Navbar Shell ────────────────────────────────────── */
+.fh-navbar {
+  background: rgba(255,255,255,0.98);
+  border-bottom: 1px solid var(--fh-border);
+  box-shadow: 0 1px 4px rgba(15,23,42,0.06);
+  font-family: var(--fh-font);
+  min-height: 58px;
+  z-index: 1030;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: box-shadow 0.2s;
 }
 
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-  height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.fh-navbar.scrolled {
+  box-shadow: 0 4px 16px rgba(15,23,42,0.10);
 }
 
-/* Logo */
-.nav-logo {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--primary-color, #0f172a);
-  text-decoration: none;
-  letter-spacing: -0.5px;
-}
-
-.nav-logo:hover {
-  text-decoration: none;
-}
-
-.logo-accent {
-  color: var(--accent-color, #4577ec);
-}
-
-.nav-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: 1;
-  margin-left: 40px;
-}
-
-/* Menu Center */
-.nav-menu {
-  display: flex;
-  list-style: none;
-  margin: 0;
+/* ── Brand / Logo ────────────────────────────────────── */
+.fh-brand {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--fh-navy) !important;
+  letter-spacing: -0.6px;
+  line-height: 1;
+  text-decoration: none !important;
   padding: 0;
-  gap: 32px;
+  transition: opacity 0.15s;
 }
+.fh-brand span { color: var(--fh-primary); }
+.fh-brand:hover { opacity: 0.85; }
 
-.nav-link {
-  text-decoration: none;
-  color: var(--text-muted, #64748b);
-  font-size: 15px;
-  font-weight: 400;
-  transition: all 0.2s ease;
-  position: relative;
-  padding: 8px 0;
-}
-
-.nav-link:hover {
-  color: var(--primary-color, #0f172a);
-  text-decoration: none;
-}
-
-.nav-link.active {
-  color: var(--text-main, #1e293b);
+/* ── Nav Links (center) ──────────────────────────────── */
+.fh-nav-links .nav-link.fh-nav-link {
+  color: var(--fh-slate);
+  font-size: 14px;
   font-weight: 500;
+  padding: 7px 12px;
+  border-radius: 7px;
+  transition: background 0.18s, color 0.18s;
+  white-space: nowrap;
+}
+.fh-nav-links .nav-link.fh-nav-link:hover,
+.fh-nav-links .nav-link.fh-nav-link:focus {
+  background: var(--fh-primary-light);
+  color: var(--fh-primary);
+}
+.fh-nav-links .nav-link.fh-nav-link.active {
+  background: var(--fh-primary-light);
+  color: var(--fh-primary);
+  font-weight: 600;
 }
 
-.nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -18px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--text-main, #1e293b);
-  border-radius: 2px;
+/* Post-job pill button */
+.fh-post-btn.fh-nav-link {
+  background: var(--fh-primary) !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-radius: 9999px;
+}
+.fh-post-btn.fh-nav-link:hover {
+  background: var(--fh-primary-dark) !important;
+  color: #fff !important;
 }
 
-/* Right Section */
-.nav-right {
+/* ── Right side buttons ──────────────────────────────── */
+.fh-btn-login {
+  color: var(--fh-primary);
+  background: transparent;
+  border: 1.5px solid var(--fh-primary);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 18px;
+  min-height: 34px;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.fh-btn-login:hover {
+  background: var(--fh-primary-light);
+  color: var(--fh-primary-dark);
+  border-color: var(--fh-primary-dark);
+}
+
+.fh-btn-register {
+  color: #fff;
+  background: var(--fh-primary);
+  border: 1.5px solid var(--fh-primary);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 18px;
+  min-height: 34px;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.fh-btn-register:hover {
+  background: var(--fh-primary-dark);
+  border-color: var(--fh-primary-dark);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10,102,194,0.25);
+}
+
+/* ── User Chip ───────────────────────────────────────── */
+.fh-user-chip {
+  background: #F8FAFC;
+  border: 1px solid var(--fh-border);
+  border-radius: 9999px;
+  padding: 5px 12px 5px 6px;
+}
+
+.fh-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--fh-primary) 0%, var(--fh-primary-dark) 100%);
+  color: #fff;
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
-.nav-right .text-muted {
-  color: var(--text-muted, #64748b);
-  font-size: 14px;
+.fh-role-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.6;
+  width: fit-content;
+}
+.badge-seeker  { background: #DBEAFE; color: #1E40AF; }
+.badge-company { background: #DBEAFE; color: #1D4ED8; }
+.badge-staff   { background: #D1FAE5; color: #065F46; }
+.badge-admin   { background: #EDE9FE; color: #6D28D9; }
+
+.fh-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fh-navy);
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.nav-right .text-bold {
-  color: var(--text-main, #1e293b);
-  font-weight: 500;
-  font-size: 15px;
+.fh-btn-logout {
+  color: #DC2626;
+  background: transparent;
+  border: 1.5px solid #FCA5A5;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  min-height: 32px;
+  transition: all 0.18s;
+  white-space: nowrap;
+  font-family: var(--fh-font);
+}
+.fh-btn-logout:hover {
+  background: #FEE2E2;
+  border-color: #DC2626;
+  color: #991B1B;
 }
 
-.nav-right .divider {
-  width: 1px;
-  height: 16px;
-  background-color: var(--border-color, #e2e8f0);
-}
-
-.btn-register {
-  text-decoration: none;
-  color: var(--text-main, #1e293b);
-  border: 1px solid var(--border-color, #e2e8f0);
-  padding: 8px 20px;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 400;
-  background-color: var(--bg-white, #ffffff);
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.btn-register:hover {
-  border-color: var(--accent-color, #4577ec);
-  color: var(--accent-color, #4577ec);
-  text-decoration: none;
-}
-
-/* Hamburger Toggle Icon */
-.nav-toggle {
-  display: none;
-  background: none;
+/* ── Mobile Toggle (custom bars) ─────────────────────── */
+.fh-toggler {
   border: none;
+  background: transparent;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   cursor: pointer;
-  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.18s;
 }
-
-.hamburger {
+.fh-toggler:hover { background: #F1F5F9; }
+.fh-toggler:focus { outline: 2px solid var(--fh-primary); outline-offset: 2px; box-shadow: none; }
+.fh-toggler-bar {
   display: block;
-  width: 24px;
+  width: 22px;
   height: 2px;
-  background-color: var(--text-main, #1e293b);
-  position: relative;
+  background: var(--fh-navy);
+  border-radius: 2px;
   transition: all 0.3s ease;
 }
 
-.hamburger::before,
-.hamburger::after {
-  content: '';
-  position: absolute;
-  width: 24px;
-  height: 2px;
-  background-color: var(--text-main, #1e293b);
-  transition: all 0.3s ease;
+/* ── Mobile Collapsed Menu ───────────────────────────── */
+@media (max-width: 991.98px) {
+  .fh-navbar .navbar-collapse {
+    background: #fff;
+    border-top: 1px solid var(--fh-border);
+    padding: 14px 0 18px 0;
+    margin-top: 4px;
+  }
+  .fh-nav-links {
+    margin-bottom: 14px;
+  }
+  .fh-nav-links .nav-link.fh-nav-link {
+    font-size: 15px;
+    padding: 10px 16px;
+    border-radius: 0;
+    border-bottom: 1px solid #F1F5F9;
+  }
+  .fh-nav-right {
+    padding: 12px 16px 0 16px;
+    flex-wrap: wrap;
+  }
+  .fh-user-chip {
+    width: 100%;
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .fh-user-info { display: flex !important; }
+  .fh-btn-login,
+  .fh-btn-register,
+  .fh-btn-logout {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+  }
 }
 
-.hamburger::before { top: -7px; }
-.hamburger::after { bottom: -7px; }
-
-/* Responsive Settings */
-@media (max-width: 992px) {
-  .nav-toggle {
-    display: block;
-  }
-
-  .nav-wrapper {
-    position: absolute;
-    top: 72px;
-    left: 0;
-    width: 100%;
-    background-color: var(--bg-white, #ffffff);
-    flex-direction: column;
-    align-items: stretch;
-    margin-left: 0;
-    padding: 20px 24px 30px 24px;
-    box-sizing: border-box;
-    border-bottom: 1px solid var(--border-color, #e2e8f0);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
-    display: none;
-  }
-
-  .nav-wrapper.show {
-    display: flex;
-  }
-
-  .nav-menu {
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-
-  .nav-link.active::after {
-    display: none;
-  }
-
-  .nav-right {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color, #e2e8f0);
-  }
-
-  .nav-right .divider {
-    display: none;
-  }
-
-  .btn-register {
-    width: 100%;
-    padding: 10px 0;
-  }
-
-  .nav-toggle.open .hamburger {
-    background-color: transparent;
-  }
-
-  .nav-toggle.open .hamburger::before {
-    transform: rotate(45deg);
-    top: 0;
-  }
-
-  .nav-toggle.open .hamburger::after {
-    transform: rotate(-45deg);
-    bottom: 0;
-  }
-}
+/* ── Legacy support (keep existing classes working) ─── */
+.freelance-unified-navbar { display: none !important; }

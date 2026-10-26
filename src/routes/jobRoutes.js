@@ -4,34 +4,38 @@ const express = require('express');
 const router = express.Router();
 
 const jobController = require('../controllers/jobController');
-const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
+const { authenticateToken } = require('../middlewares/authMiddleware');
 
-// เส้นทางสำหรับ Jobs CRUD
+// ดึงรายการงาน (เปิดให้อ่านได้ทั่วไป หรือกรองตามสิทธิ์หากล็อกอิน)
 router.get('/', jobController.getAllJobs);
 router.get('/:id', jobController.getJobById);
 
-// สร้างงาน
+// สร้างงาน (ต้องล็อกอิน)
 router.post(
-    '/',
-    authenticateToken,
-    requireRole('user', 'client', 'freelancer', 'admin'),
-    jobController.createJob
+  '/',
+  authenticateToken,
+  jobController.createJob
 );
 
-// แก้ไขงาน
+// แก้ไขงาน (มีการตรวจสิทธิ์และ Ownership ใน Controller)
 router.put(
-    '/:id',
-    authenticateToken,
-    requireRole('user', 'client', 'freelancer', 'admin'),
-    jobController.updateJob
+  '/:id',
+  authenticateToken,
+  jobController.updateJob
 );
 
-// ลบงาน
+// ปรับปรุงสถานะงานและมอบหมายงาน (Workflow State Transition)
+router.patch(
+  '/:id/status',
+  authenticateToken,
+  jobController.updateJobStatus
+);
+
+// ลบงาน (มีการตรวจสิทธิ์และ Ownership ใน Controller)
 router.delete(
-    '/:id',
-    authenticateToken,
-    requireRole('user', 'client', 'freelancer', 'admin'),
-    jobController.deleteJob
+  '/:id',
+  authenticateToken,
+  jobController.deleteJob
 );
 
 module.exports = router;

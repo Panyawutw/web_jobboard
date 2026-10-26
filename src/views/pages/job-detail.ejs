@@ -1,0 +1,331 @@
+<%- include('../partials/header', { title: `${job.title} - ${job.company_name || 'FreelanceHub'}` }) %>
+<%- include('../partials/navbar') %>
+
+<main class="fh-page-main">
+  <div class="container-xl py-4">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb fh-breadcrumb">
+        <li class="breadcrumb-item"><a href="/">หน้าแรก</a></li>
+        <li class="breadcrumb-item"><a href="/">หางานทั้งหมด</a></li>
+        <li class="breadcrumb-item"><a href="/?category=<%= encodeURIComponent(job.category) %>"><%= job.category %></a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= job.title %></li>
+      </ol>
+    </nav>
+
+    <!-- Alert Box -->
+    <div id="alert-box" class="alert d-none mb-3" role="alert"></div>
+
+    <!-- Page Grid: Main + Sidebar -->
+    <div class="row g-4 align-items-start">
+
+      <!-- ══ Main Column ══════════════════════════════════ -->
+      <div class="col-12 col-lg-8">
+
+        <!-- Job Header Card -->
+        <div class="card fh-detail-card mb-4">
+          <div class="card-body p-4">
+
+            <!-- Company + Title -->
+            <div class="mb-3">
+              <div class="mb-1">
+                <span class="badge fh-badge-category me-2"><%= job.category %></span>
+                <span class="fh-post-date"><i class="bi bi-clock me-1"></i><%= new Date(job.created_at).toLocaleDateString('th-TH') %></span>
+              </div>
+              <h1 class="fh-detail-title mb-1"><%= job.title %></h1>
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="fh-company-name"><%= job.company_name || 'บริษัท เทคโนโลยี อินโนเวชั่น จำกัด' %></span>
+                <span class="badge fh-verified-badge"><i class="bi bi-shield-check me-1"></i>ตรวจสอบแล้ว</span>
+              </div>
+            </div>
+
+            <!-- 4-Highlight Grid -->
+            <div class="row g-3 fh-highlights mb-4">
+              <div class="col-6 col-sm-3">
+                <div class="fh-highlight-box">
+                  <span class="fh-hl-icon"><i class="bi bi-cash-stack"></i></span>
+                  <div>
+                    <div class="fh-hl-label">เงินเดือน</div>
+                    <div class="fh-hl-value fh-salary-value"><%= Number(job.budget).toLocaleString() %> ฿</div>
+                    <div class="fh-hl-sub">/ เดือน</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-sm-3">
+                <div class="fh-highlight-box">
+                  <span class="fh-hl-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                  <div>
+                    <div class="fh-hl-label">สถานที่ทำงาน</div>
+                    <div class="fh-hl-value"><%= job.location || 'กรุงเทพมหานคร' %></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-sm-3">
+                <div class="fh-highlight-box">
+                  <span class="fh-hl-icon"><i class="bi bi-briefcase"></i></span>
+                  <div>
+                    <div class="fh-hl-label">รูปแบบงาน</div>
+                    <div class="fh-hl-value"><%= job.work_format || 'Hybrid' %></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-sm-3">
+                <div class="fh-highlight-box">
+                  <span class="fh-hl-icon"><i class="bi bi-people-fill"></i></span>
+                  <div>
+                    <div class="fh-hl-label">อัตรารับสมัคร</div>
+                    <div class="fh-hl-value"><%= job.vacancies || '1 - 2 อัตรา' %></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Apply CTA Banner -->
+            <div class="fh-apply-banner d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 p-3">
+              <div>
+                <div class="fw-bold text-dark mb-1">สนใจร่วมงานในตำแหน่งนี้?</div>
+                <div class="text-muted small">ส่งใบสมัครพร้อมแนบ Resume เพื่อให้ฝ่ายบุคคลพิจารณาได้ทันที</div>
+              </div>
+              <div>
+                <% if (hasApplied) { %>
+                  <div class="fh-applied-badge">
+                    <i class="bi bi-check-circle-fill me-1"></i> ส่งใบสมัครแล้ว (<%= userApplication ? (userApplication.status === 'accepted' ? 'รับเข้าทำงาน' : userApplication.status === 'rejected' ? 'ปฏิเสธ' : 'รอพิจารณา') : 'รอพิจารณา' %>)
+                  </div>
+                <% } else if (typeof accountRole !== 'undefined' && String(accountRole).toLowerCase() === 'jobseeker') { %>
+                  <button type="button" id="btn-open-apply-modal" class="btn fh-btn-apply-large">
+                    <i class="bi bi-pencil-square me-1"></i> สมัครงานด่วน (Apply Now)
+                  </button>
+                <% } else if (typeof accountRole !== 'undefined' && accountRole) { %>
+                  <span class="badge bg-light text-secondary border p-2 fs-6">เข้าสู่ระบบในฐานะ <%= accountRole %></span>
+                <% } else { %>
+                  <a href="/login?returnTo=/jobs/<%= job.id %>" class="btn fh-btn-apply-large">
+                    <i class="bi bi-lock-fill me-1"></i> เข้าสู่ระบบเพื่อสมัครงาน
+                  </a>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Application Form (inline, shown on demand) -->
+            <div id="apply-modal" class="fh-apply-modal d-none mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold text-dark mb-0"><i class="bi bi-pencil-square me-1"></i> ส่งใบสมัคร: <%= job.title %></h2>
+                <button type="button" id="btn-close-modal" class="btn-close" aria-label="ปิด"></button>
+              </div>
+              <form id="apply-form" enctype="multipart/form-data">
+                <input type="hidden" name="jobId" value="<%= job.id %>">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">ข้อความแนะนำตัว / Cover Note</label>
+                  <textarea name="coverNote" rows="3" class="form-control"
+                    placeholder="ระบุทักษะ ความเชี่ยวชาญ และความพร้อมในการเริ่มงาน..."></textarea>
+                </div>
+                <div class="fh-upload-zone mb-4">
+                  <label class="form-label fw-semibold d-block mb-1"><i class="bi bi-paperclip me-1"></i> แนบไฟล์ Resume / Portfolio *</label>
+                  <div class="text-muted small mb-2">รองรับ PDF, Word, รูปภาพ – ขนาดไม่เกิน 10MB</div>
+                  <input type="file" name="file" accept=".pdf,.doc,.docx,.jpg,.png" required class="form-control">
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" id="btn-cancel-apply" class="btn btn-secondary">ยกเลิก</button>
+                  <button type="submit" class="btn fh-btn-apply-large">ยืนยันส่งใบสมัคร</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Section: Responsibilities -->
+            <div class="fh-section-headline"><i class="bi bi-list-task me-1"></i> หน้าที่และความรับผิดชอบ (Responsibilities)</div>
+            <ul class="fh-bullet-list">
+              <% if (job.responsibilities && job.responsibilities.length) { %>
+                <% job.responsibilities.forEach(function(item) { %><li><%= item %></li><% }); %>
+              <% } else { %>
+                <li><%= job.description %></li>
+              <% } %>
+            </ul>
+
+            <!-- Section: Qualifications -->
+            <div class="fh-section-headline"><i class="bi bi-mortarboard me-1"></i> คุณสมบัติผู้สมัคร (Qualifications)</div>
+            <ul class="fh-bullet-list">
+              <% if (job.qualifications && job.qualifications.length) { %>
+                <% job.qualifications.forEach(function(item) { %><li><%= item %></li><% }); %>
+              <% } else { %>
+                <li>วุฒิการศึกษาระดับปริญญาตรีขึ้นไป ในสาขาที่เกี่ยวข้อง</li>
+                <li>มีประสบการณ์และความสามารถในสายงาน <%= job.category %></li>
+                <li>มีความรับผิดชอบ สามารถทำงานร่วมกับผู้อื่นได้ดี</li>
+              <% } %>
+            </ul>
+
+            <!-- Section: Benefits -->
+            <div class="fh-section-headline"><i class="bi bi-gift me-1"></i> สวัสดิการ (Benefits &amp; Perks)</div>
+            <ul class="fh-bullet-list">
+              <% if (job.benefits && job.benefits.length) { %>
+                <% job.benefits.forEach(function(item) { %><li><%= item %></li><% }); %>
+              <% } else { %>
+                <li>ประกันสังคม และประกันสุขภาพกลุ่ม</li>
+                <li>โบนัสประจำปีตามผลประกอบการ</li>
+                <li>วันหยุดพักผ่อนประจำปี</li>
+              <% } %>
+            </ul>
+
+            <!-- Section: How to Apply -->
+            <div class="fh-section-headline"><i class="bi bi-clipboard me-1"></i> วิธีการสมัครงาน (How to Apply)</div>
+            <div class="fh-info-box">
+              1. กดปุ่ม <strong>"สมัครงานด่วน (Apply Now)"</strong> บนเว็บไซต์นี้เพื่อส่งประวัติและไฟล์ Resume ทันที<br>
+              2. หรือติดต่อส่งประวัติทางอีเมล: <a href="mailto:<%= job.company_email || 'hr@jobboard.com' %>" class="fh-link"><%= job.company_email || 'hr@jobboard.com' %></a><br>
+              3. ฝ่าย HR จะติดต่อกลับผู้สมัครที่ผ่านเกณฑ์เพื่อนัดหมายสัมภาษณ์
+            </div>
+
+            <!-- Section: Contact Info -->
+            <div class="fh-section-headline"><i class="bi bi-building me-1"></i> ข้อมูลติดต่อและสถานที่ทำงาน</div>
+            <div class="fh-contact-grid row g-2">
+              <div class="col-12 col-sm-6"><span class="fh-contact-label">บริษัท:</span> <%= job.company_name || 'บริษัท เทคโนโลยี อินโนเวชั่น จำกัด' %></div>
+              <div class="col-12 col-sm-6"><span class="fh-contact-label">ที่อยู่:</span> <%= job.company_address || '123 ถนนรัชดาภิเษก กรุงเทพมหานคร 10310' %></div>
+              <div class="col-12 col-sm-6"><span class="fh-contact-label">โทร:</span> <%= job.company_phone || '02-123-4567' %></div>
+              <div class="col-12 col-sm-6"><span class="fh-contact-label">อีเมล:</span> <a href="mailto:<%= job.company_email || 'hr@jobboard.com' %>" class="fh-link"><%= job.company_email || 'hr@jobboard.com' %></a></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /.col main -->
+
+      <!-- ══ Sidebar Column ═══════════════════════════════ -->
+      <div class="col-12 col-lg-4">
+
+        <!-- Company Info Card -->
+        <div class="card fh-sidebar-card mb-3">
+          <div class="card-body p-3">
+            <div class="fh-sidebar-title"><i class="bi bi-building me-1"></i> ข้อมูลเกี่ยวกับบริษัท</div>
+            <div class="fw-bold text-dark mb-1"><%= job.company_name || 'บริษัท เทคโนโลยี อินโนเวชั่น จำกัด' %></div>
+            <div class="text-muted small mb-3">ผู้นำด้านการพัฒนาโซลูชันเทคโนโลยีสารสนเทศ ซอฟต์แวร์ และแอปพลิเคชันเพื่อธุรกิจยุคใหม่</div>
+            <div class="d-flex flex-column gap-1 small text-secondary">
+              <div><i class="bi bi-geo-alt-fill me-1"></i> <strong>สถานที่:</strong> <%= job.location %></div>
+              <div><i class="bi bi-people-fill me-1"></i> <strong>ขนาดองค์กร:</strong> 50 - 200 คน</div>
+              <div><i class="bi bi-globe me-1"></i> <strong>ประเภทธุรกิจ:</strong> IT / Software</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Apply (sticky sidebar CTA) -->
+        <% if (!hasApplied && typeof accountRole !== 'undefined' && String(accountRole).toLowerCase() === 'jobseeker') { %>
+        <div class="card fh-sidebar-card fh-cta-card mb-3">
+          <div class="card-body p-3 text-center">
+            <div class="fw-bold mb-2 text-dark">พร้อมสมัครงานแล้วใช่ไหม?</div>
+            <button type="button" id="btn-sidebar-apply" class="btn fh-btn-apply-large w-100">
+              <i class="bi bi-pencil-square me-1"></i> สมัครงานด่วน
+            </button>
+          </div>
+        </div>
+        <% } else if (typeof accountName === 'undefined' || !accountName) { %>
+        <div class="card fh-sidebar-card fh-cta-card mb-3">
+          <div class="card-body p-3 text-center">
+            <div class="fw-bold mb-1 text-dark">เข้าสู่ระบบเพื่อสมัครงาน</div>
+            <div class="text-muted small mb-3">สร้างบัญชีฟรี เริ่มต้นหางานได้เลย</div>
+            <a href="/login?returnTo=/jobs/<%= job.id %>" class="btn fh-btn-apply-large w-100"><i class="bi bi-lock-fill me-1"></i> เข้าสู่ระบบ</a>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Share Card -->
+        <div class="card fh-sidebar-card mb-3">
+          <div class="card-body p-3">
+            <div class="fh-sidebar-title">📤 แชร์ตำแหน่งงานนี้</div>
+            <div class="d-flex gap-2">
+              <button type="button" id="btn-copy-link" class="btn fh-btn-share flex-grow-1">📋 คัดลอกลิงก์</button>
+              <a href="mailto:?subject=ตำแหน่งงาน: <%= encodeURIComponent(job.title) %>&body=ดูรายละเอียดงานได้ที่: <%= encodeURIComponent('https://freelancehub.com/jobs/' + job.id) %>"
+                class="btn fh-btn-share-email">✉️ ส่งต่อ</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Jobs -->
+        <% if (relatedJobs && relatedJobs.length) { %>
+        <div class="card fh-sidebar-card mb-3">
+          <div class="card-body p-3">
+            <div class="fh-sidebar-title">💼 งานอื่นๆ ที่น่าสนใจ</div>
+            <div class="d-flex flex-column">
+              <% relatedJobs.forEach(function(relJob) { %>
+                <div class="fh-related-item">
+                  <a href="/jobs/<%= relJob.id %>" class="fh-related-link"><%= relJob.title %></a>
+                  <div class="text-muted small"><%= relJob.company_name || 'บริษัท' %></div>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <span class="fh-salary-sm"><%= Number(relJob.budget).toLocaleString() %> ฿</span>
+                    <span class="text-muted" style="font-size:11px;"><%= relJob.location %></span>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+      </div><!-- /.col sidebar -->
+
+    </div><!-- /.row -->
+  </div><!-- /.container-xl -->
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const alertBox = document.getElementById('alert-box');
+    const modal = document.getElementById('apply-modal');
+    const openBtn = document.getElementById('btn-open-apply-modal');
+    const sidebarApplyBtn = document.getElementById('btn-sidebar-apply');
+    const closeBtn = document.getElementById('btn-close-modal');
+    const cancelBtn = document.getElementById('btn-cancel-apply');
+    const applyForm = document.getElementById('apply-form');
+    const copyLinkBtn = document.getElementById('btn-copy-link');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} mb-3`;
+        alertBox.classList.remove('d-none');
+        alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function openModal() {
+        if (modal) {
+            modal.classList.remove('d-none');
+            modal.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function closeModal() {
+        if (modal) modal.classList.add('d-none');
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (sidebarApplyBtn) sidebarApplyBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    if (applyForm) {
+        applyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(applyForm);
+            try {
+                const res = await fetch('/api/seeker/apply', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'ส่งใบสมัครล้มเหลว');
+                showAlert('✅ ส่งใบสมัครและ Resume เรียบร้อยแล้ว! กำลังโหลดหน้าใหม่...', true);
+                closeModal();
+                setTimeout(() => window.location.reload(), 1500);
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    }
+
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => {
+                    const orig = copyLinkBtn.textContent;
+                    copyLinkBtn.textContent = '✅ คัดลอกแล้ว!';
+                    setTimeout(() => { copyLinkBtn.textContent = orig; }, 2000);
+                })
+                .catch(() => prompt('คัดลอกลิงก์ด้านล่างนี้:', window.location.href));
+        });
+    }
+});
+</script>
+
+<%- include('../partials/footer') %>

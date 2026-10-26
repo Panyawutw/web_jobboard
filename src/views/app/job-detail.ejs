@@ -1,0 +1,214 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 900px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <div style="margin-bottom: 20px;">
+        <a href="/app/jobs" style="color: #64748B; font-size: 13px; text-decoration: none;">&larr; กลับไปยังรายการงานทั้งหมด</a>
+    </div>
+
+    <% if (success) { %>
+        <div style="background: #DCFCE7; border: 1px solid #86EFAC; color: #166534; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
+            ✅ <%= success %>
+        </div>
+    <% } %>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 24px; margin-bottom: 24px;">
+        <div style="border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;" class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div style="margin-bottom: 8px;" class="d-flex align-items-center gap-2">
+                    <span style="background: #EFF6FF; color: #1D4ED8; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                        <%= job.category %>
+                    </span>
+                    <span style="color: #64748B; font-size: 13px;">📍 <%= job.location %></span>
+                </div>
+                <h1 style="text-align: left; margin: 0; color: #1E293B; font-size: 24px;"><%= job.title %></h1>
+                <div style="color: #64748B; font-size: 13px; margin-top: 6px;">
+                    ผู้ส่งคำขอ: <strong><%= job.creator_name || 'ผู้ใช้งาน' %></strong> | ส่งเมื่อ: <%= new Date(job.created_at).toLocaleString('th-TH') %>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-size: 24px; font-weight: 700; color: #2563EB; margin-bottom: 6px;">
+                    <%= Number(job.budget).toLocaleString() %> ฿
+                </div>
+                <div>
+                    <span id="job-status-badge" style="background: <%= job.status === 'approved' ? '#DCFCE7' : job.status === 'rejected' ? '#FEE2E2' : job.status === 'in_progress' ? '#E0E7FF' : job.status === 'completed' ? '#D1FAE5' : '#FEF3C7' %>; color: <%= job.status === 'approved' ? '#166534' : job.status === 'rejected' ? '#991B1B' : job.status === 'in_progress' ? '#3730A3' : job.status === 'completed' ? '#065F46' : '#92400E' %>; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 700; text-transform: uppercase;">
+                        <%= job.status %>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <h3 style="color: #1E293B; font-size: 16px; margin-bottom: 8px;">รายละเอียดคำของาน:</h3>
+            <div style="color: #334155; line-height: 1.7; white-space: pre-wrap; font-size: 15px;">
+                <%= job.description %>
+            </div>
+        </div>
+
+        <% if (job.reviewer_note) { %>
+            <div style="margin-top: 20px; background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 4px;">
+                <strong style="color: #92400E; font-size: 13px;">📝 บันทึกจากผู้ตรวจสอบ (Reviewer Note):</strong>
+                <p style="margin: 4px 0 0 0; color: #78350F; font-size: 14px;"><%= job.reviewer_note %></p>
+            </div>
+        <% } %>
+
+        <% if (job.assignee_name) { %>
+            <div style="margin-top: 14px; font-size: 13px; color: #475569;">
+                เจ้าหน้าที่ผู้รับผิดชอบ: <strong style="color: #059669;"><%= job.assignee_name %></strong>
+            </div>
+        <% } %>
+    </section>
+
+    <!-- Attachments Section -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="margin-top: 0; color: #1E293B; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+            📎 เอกสารแนบ (Protected Attachments)
+        </h3>
+        <p style="color: #64748B; font-size: 12px; margin-top: -4px; margin-bottom: 14px;">
+            ไฟล์ได้รับการคุ้มครองสิทธิ์ (การดาวน์โหลดต้องผ่านการตรวจสอบ Server-side Middleware)
+        </p>
+
+        <% if (!job.attachments || job.attachments.length === 0) { %>
+            <div style="color: #94A3B8; font-size: 13px; font-style: italic;">
+                ไม่มีเอกสารแนบสำหรับคำขอนี้
+            </div>
+        <% } else { %>
+            <div style="display: flex; flex-direction: column; gap: 10px;" class="d-flex flex-column gap-2">
+                <% job.attachments.forEach(function(file) { %>
+                    <div style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px 16px; background: #F8FAFC;" class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div style="font-weight: 600; color: #1E293B; font-size: 14px;"><%= file.original_name %></div>
+                            <div style="color: #64748B; font-size: 12px; margin-top: 2px;">
+                                ชนิด: <%= file.mime_type %> | ขนาด: <%= (file.file_size / 1024).toFixed(1) %> KB | วันที่: <%= new Date(file.created_at).toLocaleDateString('th-TH') %>
+                            </div>
+                        </div>
+                        <a href="/api/files/<%= file.id %>" target="_blank" style="background: #2563EB; color: white; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;" class="btn btn-primary">
+                            ดาวน์โหลด / เปิดดู
+                        </a>
+                    </div>
+                <% }); %>
+            </div>
+        <% } %>
+    </section>
+
+    <!-- Workflow State Transition Actions -->
+    <% 
+    const roleLower = String(accountRole || '').toLowerCase();
+    const canDoWorkflow = roleLower === 'admin' || canApprove || canUpdateStatus || isOwner;
+    %>
+
+    <% if (canDoWorkflow) { %>
+        <section style="background: white; border: 1px solid #CBD5E1; border-radius: 10px; padding: 20px;">
+            <h3 style="margin-top: 0; color: #1E293B; font-size: 16px;">⚡ การจัดการสถานะคำขอ (Workflow Actions)</h3>
+
+            <!-- 1. Manager / Admin Approval Form -->
+            <% if (roleLower === 'admin' || canApprove) { %>
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <h4 style="margin: 0 0 10px 0; color: #1E293B;">ส่วนการพิจารณาอนุมัติ (Manager / Admin)</h4>
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 13px; font-weight: 500;" class="form-label">บันทึกจากผู้ตรวจสอบ (Reviewer Note):</label>
+                        <input type="text" id="reviewer-note" value="<%= job.reviewer_note || '' %>" placeholder="ระบุเหตุผลหรือข้อความแจ้งผู้ส่งคำขอ..." class="form-control">
+                    </div>
+                    <div style="display: flex; gap: 10px;" class="d-flex gap-2">
+                        <button type="button" class="btn-action-status btn" data-status="approved" style="background: #059669; color: white; padding: 8px 16px;">
+                            ✅ อนุมัติงาน (Approve)
+                        </button>
+                        <button type="button" class="btn-action-status btn" data-status="rejected" style="background: #DC2626; color: white; padding: 8px 16px;">
+                            ❌ ปฏิเสธงาน (Reject)
+                        </button>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- 2. Staff Status Update -->
+            <% if (roleLower === 'admin' || canUpdateStatus) { %>
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <h4 style="margin: 0 0 10px 0; color: #1E293B;">ปรับปรุงสถานะการปฏิบัติงาน (Staff Operations)</h4>
+                    <div style="display: flex; gap: 10px;" class="d-flex gap-2">
+                        <button type="button" class="btn-action-status btn" data-status="in_progress" style="background: #3B82F6; color: white; padding: 8px 16px;">
+                            🔄 กำลังดำเนินการ (In Progress)
+                        </button>
+                        <button type="button" class="btn-action-status btn" data-status="completed" style="background: #10B981; color: white; padding: 8px 16px;">
+                            🎉 ดำเนินการเสร็จสิ้น (Completed)
+                        </button>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- 3. Owner Actions (Delete own job) -->
+            <% if (isOwner || roleLower === 'admin') { %>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;" class="d-flex justify-content-end gap-2">
+                    <button type="button" id="btn-delete-job" style="background: #991B1B; color: white; padding: 8px 16px;" class="btn">
+                        🗑️ ลบคำของานนี้
+                    </button>
+                </div>
+            <% } %>
+        </section>
+    <% } %>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const jobId = <%= job.id %>;
+    const alertBox = document.getElementById('alert-box');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Action buttons for status changes
+    document.querySelectorAll('.btn-action-status').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const status = btn.dataset.status;
+            const reviewerNoteInput = document.getElementById('reviewer-note');
+            const reviewerNote = reviewerNoteInput ? reviewerNoteInput.value.trim() : null;
+
+            try {
+                const res = await fetch(`/api/jobs/${jobId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, reviewerNote })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'ปรับสถานะล้มเหลว');
+
+                showAlert('✅ ปรับสถานะงานสำเร็จ! หน้าเว็บจะรีโหลด...', true);
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    });
+
+    // Delete job button
+    const deleteBtn = document.getElementById('btn-delete-job');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบคำของานนี้?')) return;
+
+            try {
+                const res = await fetch(`/api/jobs/${jobId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'ลบงานล้มเหลว');
+
+                alert('ลบคำของานสำเร็จ');
+                window.location.href = '/app/jobs';
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    }
+});
+</script>
+
+<%- include('../partials/footer') %>

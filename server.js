@@ -10,24 +10,28 @@ const loggerMiddleware = require('./src/middlewares/loggerMiddleware');
 const { notFoundHandler, errorHandler } = require('./src/middlewares/errorMiddleware');
 const apiRoutes = require('./src/routes');
 const viewRoutes = require('./src/routes/viewRoutes');
+const adminViewRoutes = require('./src/routes/adminViewRoutes');
+const companyRoutes = require('./src/routes/companyRoutes');
+const moderatorRoutes = require('./src/routes/moderatorRoutes');
+const seekerRoutes = require('./src/routes/seekerRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'job-board-secret-key-development';
 
-// 1. ตั้งค่า Template Engine (EJS)
+// 1. Template Engine (EJS)
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'views'));
 app.disable('x-powered-by');
 
-// 2. Middleware บันทึกเวลาประมวลผล
+// 2. Logger Middleware
 app.use(loggerMiddleware);
 
-// 3. แปลง Request Body (ทั้ง JSON และ URL-Encoded จาก Form หน้าเว็บ)
+// 3. Request Body Parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// 4. ตั้งค่า Session สำหรับระบบ Authentication ของหน้าเว็บ
+// 4. Session Configuration
 app.use(session({
     name: 'jobboard.sid',
     secret: SESSION_SECRET,
@@ -41,56 +45,53 @@ app.use(session({
     }
 }));
 
-// 5. เสิร์ฟไฟล์ Static (CSS, JS, รูปภาพ, ฟอนต์)
+// 4.1 Global Session Locals (ส่งต่อไปยังทุก view รวมถึง navbar)
+app.use((req, res, next) => {
+    res.locals.accountName = req.session ? req.session.accountName : null;
+    res.locals.accountRole = req.session ? req.session.accountRole : null;
+    res.locals.accountId = req.session ? req.session.accountId : null;
+    res.locals.currentPath = req.path;
+    next();
+});
+
+// 5. Static Assets (Public)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 6. เส้นทางสำหรับหน้าเว็บ (View Routes)
+// 6. Dedicated Single-Page Routes for Each Role
+app.use('/company', companyRoutes);       // หน้าเดียวสำหรับ บริษัท / ผู้ว่าจ้าง
+app.use('/moderator', moderatorRoutes);   // หน้าเดียวสำหรับ เจ้าหน้าที่ตรวจสอบ
+app.use('/seeker', seekerRoutes);         // หน้าเดียวสำหรับ ผู้สมัครงาน
+app.use('/app', seekerRoutes);            // รองรับ path /app ตาม AGENT.md
+app.use('/admin', adminViewRoutes);       // หน้าเดียวสำหรับ Admin (Dynamic ACL & Logs)
+
+// 7. Public Routes
 app.use('/', viewRoutes);
 
-// 7. เส้นทาง API ทั้งหมด (/api/...)
+// 8. APIs
 app.use('/api', apiRoutes);
 
-// 8. จัดการ 404 สำหรับทั้ง API และหน้าเว็บ
+// 9. 404 Handler
 app.use((req, res, next) => {
     if (req.originalUrl.startsWith('/api')) {
         return notFoundHandler(req, res);
     }
-    return res.status(404).render('errors/404', { title: '404 - ไม่พบหน้านี้' });
+    return res.status(404).render('errors/404', {
+        title: '404 - ไม่พบหน้านี้',
+        accountName: req.session ? req.session.accountName : null,
+        accountRole: req.session ? req.session.accountRole : null
+    });
 });
 
-// 9. Error Handler รวม
+// 10. Error Handler
 app.use((error, req, res, next) => {
     console.error(error);
-
     if (req.originalUrl.startsWith('/api')) {
         return errorHandler(error, req, res, next);
     }
-
-    if (req.path === '/login') {
-        return res.status(500).render('pages/login', {
-            title: 'เกิดข้อผิดพลาด - เข้าสู่ระบบ',
-            values: {},
-            errors: { form: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง' },
-            success: null,
-            accountName: null,
-            accountRole: null
-        });
-    }
-
-    if (req.path === '/register') {
-        return res.status(500).render('pages/register', {
-            title: 'เกิดข้อผิดพลาด - สมัครสมาชิก',
-            role: req.body?.role === 'company' ? 'company' : 'jobSeeker',
-            values: req.body || {},
-            errors: { form: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง' },
-            success: null
-        });
-    }
-
     return errorHandler(error, req, res, next);
 });
 
-// เริ่มต้นเซิร์ฟเวอร์
+// Start Server
 if (require.main === module) {
     app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);

@@ -1,0 +1,114 @@
+<%- include('../partials/header', { title }) %>
+<%- include('../partials/navbar') %>
+
+<main class="fh-page-main">
+  <div class="container-xl py-4">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- หัวหน้า + ปุ่มสร้างงานใหม่                               -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <div>
+        <h1 class="h4 fw-bold text-dark mb-1">
+          <i class="bi bi-clipboard-list me-2"></i>คำของานของฉัน
+        </h1>
+        <p class="text-muted small mb-0">ติดตามสถานะงานที่คุณส่งคำขอเข้าสู่ระบบ</p>
+      </div>
+      <a href="/app/jobs/new" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>ส่งคำขอเพิ่มงานใหม่
+      </a>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- ตารางรายการงาน                                            -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="card border">
+
+      <!-- กรณีไม่มีงาน -->
+      <% if (jobs.length === 0) { %>
+        <div class="card-body text-center text-muted py-5">
+          <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+          คุณยังไม่ได้สร้างคำของานใดๆ ในระบบ<br>
+          <a href="/app/jobs/new" class="fw-semibold mt-2 d-inline-block">
+            คลิกที่นี่เพื่อเริ่มส่งคำขอใหม่
+          </a>
+        </div>
+
+      <!-- กรณีมีงาน: แสดงตาราง -->
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+
+            <thead class="table-light">
+              <tr>
+                <th>ชื่องาน</th>
+                <th>หมวดหมู่</th>
+                <th>งบประมาณ</th>
+                <th class="text-center">สถานะ</th>
+                <th>วันที่ส่ง</th>
+                <th class="text-end">รายละเอียด</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% jobs.forEach(function(job) { %>
+                <%
+                  // กำหนดสีของ badge ตามสถานะ
+                  var statusColors = {
+                    approved   : 'success',
+                    rejected   : 'danger',
+                    in_progress: 'primary',
+                    completed  : 'success',
+                    pending    : 'warning'
+                  };
+                  var badgeColor = statusColors[job.status] || 'secondary';
+                %>
+                <tr>
+                  <!-- ชื่องาน -->
+                  <td class="fw-semibold">
+                    <a href="/app/jobs/<%= job.id %>" class="text-dark text-decoration-none">
+                      <%= job.title %>
+                    </a>
+                  </td>
+
+                  <!-- หมวดหมู่ -->
+                  <td class="text-muted"><%= job.category %></td>
+
+                  <!-- งบประมาณ -->
+                  <td class="fw-semibold text-primary">
+                    <%= Number(job.budget).toLocaleString() %> ฿
+                  </td>
+
+                  <!-- สถานะ -->
+                  <td class="text-center">
+                    <span class="badge rounded-pill bg-<%= badgeColor %>-subtle text-<%= badgeColor %>-emphasis">
+                      <%= job.status %>
+                    </span>
+                  </td>
+
+                  <!-- วันที่ -->
+                  <td class="text-muted small">
+                    <%= new Date(job.created_at).toLocaleDateString('th-TH') %>
+                  </td>
+
+                  <!-- ปุ่มดูรายละเอียด -->
+                  <td class="text-end">
+                    <a href="/app/jobs/<%= job.id %>" class="btn btn-sm btn-outline-primary">
+                      ดูรายละเอียด
+                    </a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+
+          </table>
+        </div><!-- /.table-responsive -->
+      <% } %>
+
+    </div><!-- /.card -->
+
+  </div><!-- /.container-xl -->
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,10 +1,43 @@
-<%- include('../partials/header', { title: '404 - ไม่พบหน้านี้' }) %>
-<%- include('../partials/navbar') %>
+<%- include('../partials/header', { title: typeof title !== 'undefined' ? title : '404 - ไม่พบหน้านี้' }) %>
+<%- include('../partials/navbar', {
+  accountName: typeof accountName !== 'undefined' ? accountName : null,
+  accountRole: typeof accountRole !== 'undefined' ? accountRole : null
+}) %>
 
-<main style="text-align: center; padding: 50px;">
-    <h2>404 Not Found</h2>
-    <p>ไม่พบหน้าที่คุณต้องการ</p>
-    <a href="/">กลับสู่หน้าหลัก</a>
+<main class="fh-page-main">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-6">
+
+        <!-- การ์ดแสดงข้อความ Error -->
+        <div class="card text-center border shadow-sm p-4">
+          <div class="card-body">
+
+            <!-- ไอคอน -->
+            <i class="bi bi-exclamation-circle text-danger" style="font-size: 3rem;"></i>
+
+            <!-- ชื่อ Error -->
+            <h1 class="h4 fw-bold text-dark mt-3 mb-2">
+              <%= typeof title !== 'undefined' ? title : '404 Not Found' %>
+            </h1>
+
+            <!-- รายละเอียด -->
+            <p class="text-muted mb-4">
+              <%= typeof message !== 'undefined' ? message : 'ไม่พบหน้าที่คุณต้องการ หรือคุณอาจไม่มีสิทธิ์เข้าถึงส่วนนี้' %>
+            </p>
+
+            <!-- ปุ่มกลับ -->
+            <div class="d-flex gap-2 justify-content-center">
+              <a href="/"      class="btn btn-primary">กลับสู่หน้าหลัก</a>
+              <a href="/login" class="btn btn-outline-secondary">เข้าสู่ระบบ</a>
+            </div>
+
+          </div>
+        </div><!-- /.card -->
+
+      </div>
+    </div>
+  </div>
 </main>
 
 <%- include('../partials/footer') %>

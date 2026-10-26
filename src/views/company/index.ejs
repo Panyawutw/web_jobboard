@@ -1,0 +1,226 @@
+<%- include('../partials/header', { title: 'ระบบจัดการสำหรับบริษัท - FreelanceHub' }) %>
+<%- include('../partials/navbar') %>
+
+<main style="max-width: 1100px; margin: 30px auto; padding: 0 20px;" class="container-fluid">
+    <!-- Header -->
+    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 24px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="text-align: left; margin: 0; color: #1E293B; font-size: 22px;">🏢 หน้าจัดการสำหรับบริษัท (Company Portal)</h1>
+            <p style="color: #64748B; margin: 4px 0 0 0; font-size: 14px;">ลงประกาศรับสมัครงาน และพิจารณาอนุมัติ/ปฏิเสธผู้สมัครในหน้าเดียว</p>
+        </div>
+        <button id="btn-toggle-job-form" type="button" style="background: #2563EB; color: white; padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;" class="btn">
+            ➕ ลงประกาศรับสมัครงานใหม่
+        </button>
+    </div>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <!-- Section 1: Form สร้างประกาศงาน (พับเปิด-ปิดได้) -->
+    <div id="new-job-card" style="background: white; border: 1px solid #CBD5E1; border-radius: 10px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);" class="d-none">
+        <h3 style="margin-top: 0; color: #1E293B;">📝 แบบฟอร์มลงประกาศรับสมัครงานใหม่</h3>
+        <form id="create-job-form">
+            <div style="grid-template-columns: 2fr 1fr 1fr; margin-bottom: 14px;" class="d-grid gap-3">
+                <div>
+                    <label style="font-weight: 600; font-size: 13px;" class="form-label">ตำแหน่งงาน *</label>
+                    <input type="text" id="job-title" required placeholder="เช่น Senior Frontend Developer" style="margin-bottom: 0;" class="form-control">
+                </div>
+                <div>
+                    <label style="font-weight: 600; font-size: 13px;" class="form-label">หมวดหมู่ *</label>
+                    <select id="job-category" required style="margin-bottom: 0;" class="form-select">
+                        <option value="Web Development">Web Development</option>
+                        <option value="Design">Design (UI/UX)</option>
+                        <option value="Mobile App">Mobile App / Android</option>
+                        <option value="Data & AI">Data & AI</option>
+                        <option value="DevOps">DevOps & Cloud</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight: 600; font-size: 13px;" class="form-label">เงินเดือน/งบประมาณ (บาท) *</label>
+                    <input type="number" id="job-budget" required min="1" placeholder="35000" style="margin-bottom: 0;" class="form-control">
+                </div>
+            </div>
+            <div style="margin-bottom: 14px;">
+                <label style="font-weight: 600; font-size: 13px;" class="form-label">สถานที่ปฏิบัติงาน</label>
+                <input type="text" id="job-location" value="Bangkok / Hybrid" placeholder="เช่น Remote หรือ Bangkok" style="margin-bottom: 0;" class="form-control">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="font-weight: 600; font-size: 13px;" class="form-label">รายละเอียดงานและคุณสมบัติ *</label>
+                <textarea id="job-desc" required rows="3" placeholder="ระบุรายละเอียดหน้าที่ความรับผิดชอบ และคุณสมบัติที่ต้องการ..." style="margin-bottom: 0;" class="form-control"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;" class="d-flex gap-2">
+                <button type="submit" style="background: #059669; color: white; padding: 9px 20px;" class="btn btn-primary">ลงประกาศงาน</button>
+                <button type="button" id="btn-cancel-job" style="background: #64748B; color: white; padding: 9px 16px;" class="btn">ยกเลิก</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Section 2: ตารางประกาศงานของบริษัท -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="margin-top: 0; color: #1E293B; font-size: 16px;">📋 ประกาศงานทั้งหมดของบริษัทคุณ</h3>
+        <% if (jobs.length === 0) { %>
+            <p style="color: #64748B; font-size: 14px;">ยังไม่มีประกาศรับสมัครงาน กดปุ่มด้านบนเพื่อเริ่มลงประกาศแรก</p>
+        <% } else { %>
+            <div style="overflow-x: auto;">
+                <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;" class="table align-middle">
+                    <thead>
+                        <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                            <th style="padding: 10px 14px;">ตำแหน่งงาน</th>
+                            <th style="padding: 10px 14px;">หมวดหมู่</th>
+                            <th style="padding: 10px 14px;">งบประมาณ</th>
+                            <th style="padding: 10px 14px; text-align: center;">สถานะตรวจสอบ</th>
+                            <th style="padding: 10px 14px;">วันที่ประกาศ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% jobs.forEach(function(job) { %>
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #1E293B;"><%= job.title %></td>
+                                <td style="padding: 10px 14px; color: #475569;"><%= job.category %></td>
+                                <td style="padding: 10px 14px; color: #2563EB; font-weight: 600;"><%= Number(job.budget).toLocaleString() %> ฿</td>
+                                <td style="padding: 10px 14px; text-align: center;">
+                                    <span style="background: <%= job.status === 'approved' ? '#DCFCE7' : job.status === 'rejected' ? '#FEE2E2' : '#FEF3C7' %>; color: <%= job.status === 'approved' ? '#166534' : job.status === 'rejected' ? '#991B1B' : '#92400E' %>; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700;">
+                                        <%= job.status === 'approved' ? 'อนุมัติแล้ว' : job.status === 'rejected' ? 'ไม่อนุมัติ' : 'รอตรวจสอบ' %>
+                                    </span>
+                                </td>
+                                <td style="padding: 10px 14px; color: #64748B;"><%= new Date(job.created_at).toLocaleDateString('th-TH') %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table></div>
+            </div>
+        <% } %>
+    </section>
+
+    <!-- Section 3: ตารางรายชื่อผู้สมัครงานที่ส่งใบสมัครเข้ามา (พร้อมปุ่ม อนุมัติ/ปฏิเสธ) -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px;">
+        <h3 style="margin-top: 0; color: #1E293B; font-size: 16px;">📥 ใบสมัครงานที่ส่งเข้ามา (Job Applications)</h3>
+        <% if (applications.length === 0) { %>
+            <p style="color: #64748B; font-size: 14px;">ยังไม่มีผู้สมัครงานส่งใบสมัครเข้ามา</p>
+        <% } else { %>
+            <div style="overflow-x: auto;">
+                <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;" class="table align-middle">
+                    <thead>
+                        <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                            <th style="padding: 10px 14px;">ผู้สมัคร</th>
+                            <th style="padding: 10px 14px;">ตำแหน่งงานที่สมัคร</th>
+                            <th style="padding: 10px 14px;">ข้อความแนะนำตัว</th>
+                            <th style="padding: 10px 14px;">ไฟล์ Resume</th>
+                            <th style="padding: 10px 14px; text-align: center;">สถานะ</th>
+                            <th style="padding: 10px 14px; text-align: right;">การพิจารณา</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% applications.forEach(function(app) { %>
+                            <tr style="border-bottom: 1px solid #F1F5F9;" id="app-row-<%= app.id %>">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #1E293B;"><%= app.applicant_name %></td>
+                                <td style="padding: 10px 14px; color: #2563EB;"><%= app.job_title %></td>
+                                <td style="padding: 10px 14px; color: #475569; max-width: 250px;"><%= app.cover_note || '-' %></td>
+                                <td style="padding: 10px 14px;">
+                                    <% if (app.resume_file_id) { %>
+                                        <a href="/api/files/<%= app.resume_file_id %>" target="_blank" style="color: #2563EB; font-weight: 500; text-decoration: underline;">
+                                            📄 <%= app.resume_name || 'เปิดดู Resume' %>
+                                        </a>
+                                    <% } else { %>
+                                        <span style="color: #94A3B8;">📄 <%= app.resume_name || 'Resume.pdf' %></span>
+                                    <% } %>
+                                </td>
+                                <td style="padding: 10px 14px; text-align: center;">
+                                    <span style="background: <%= app.status === 'accepted' ? '#DCFCE7' : app.status === 'rejected' ? '#FEE2E2' : '#FEF3C7' %>; color: <%= app.status === 'accepted' ? '#166534' : app.status === 'rejected' ? '#991B1B' : '#92400E' %>; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700;">
+                                        <%= app.status === 'accepted' ? 'รับเข้าทำงาน' : app.status === 'rejected' ? 'ปฏิเสธ' : 'รอพิจารณา' %>
+                                    </span>
+                                </td>
+                                <td style="padding: 10px 14px; text-align: right;">
+                                    <div style="display: flex; gap: 6px; justify-content: flex-end;" class="d-flex gap-1 justify-content-end">
+                                        <button type="button" class="btn-app-action btn" data-id="<%= app.id %>" data-status="accepted" style="background: #059669; color: white; padding: 4px 10px; font-size: 12px; border-radius: 4px;">
+                                            ✅ รับเข้าทำงาน
+                                        </button>
+                                        <button type="button" class="btn-app-action btn" data-id="<%= app.id %>" data-status="rejected" style="background: #DC2626; color: white; padding: 4px 10px; font-size: 12px; border-radius: 4px;">
+                                            ❌ ปฏิเสธ
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table></div>
+            </div>
+        <% } %>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const alertBox = document.getElementById('alert-box');
+    const toggleBtn = document.getElementById('btn-toggle-job-form');
+    const formCard = document.getElementById('new-job-card');
+    const cancelBtn = document.getElementById('btn-cancel-job');
+    const createJobForm = document.getElementById('create-job-form');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        formCard.style.display = formCard.style.display === 'none' ? 'block' : 'none';
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        formCard.style.display = 'none';
+    });
+
+    // สร้างงานใหม่
+    createJobForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('job-title').value;
+        const category = document.getElementById('job-category').value;
+        const budget = document.getElementById('job-budget').value;
+        const location = document.getElementById('job-location').value;
+        const description = document.getElementById('job-desc').value;
+
+        try {
+            const res = await fetch('/api/company/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, category, budget, location, description })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'ลงประกาศงานล้มเหลว');
+
+            showAlert('✅ ลงประกาศงานสำเร็จ! ส่งไปยังเจ้าหน้าที่ตรวจสอบแล้ว', true);
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (err) {
+            showAlert('❌ ' + err.message, false);
+        }
+    });
+
+    // พิจารณาผู้สมัคร (อนุมัติ / ปฏิเสธ)
+    document.querySelectorAll('.btn-app-action').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const status = btn.dataset.status;
+
+            try {
+                const res = await fetch(`/api/company/applications/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'อัปเดตสถานะล้มเหลว');
+
+                showAlert(`✅ บันทึกผลการพิจารณาเป็น "${status === 'accepted' ? 'รับเข้าทำงาน' : 'ปฏิเสธ'}" เรียบร้อยแล้ว`, true);
+                setTimeout(() => window.location.reload(), 800);
+            } catch (err) {
+                showAlert('❌ ' + err.message, false);
+            }
+        });
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

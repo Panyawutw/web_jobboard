@@ -1,0 +1,197 @@
+<%- include('../partials/header', { title: 'ค้นหาและสมัครงาน - Job Seeker' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="jobthai-container container-fluid" style="padding-top: 24px; padding-bottom: 50px;">
+    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 22px; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <span style="background: #DBEAFE; color: #1E40AF; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px;">
+                    PORTAL: JOB SEEKER
+                </span>
+                <h1 style="text-align: left; margin: 0; color: #0F172A; font-size: 22px;">👤 พื้นที่ผู้สมัครงาน (Job Seeker Portal)</h1>
+                <p style="color: #64748B; margin: 4px 0 0 0; font-size: 14px;">ค้นหางาน ส่งใบสมัครพร้อมแนบไฟล์ Resume/Portfolio และติดตามผลการพิจารณา</p>
+            </div>
+            <a href="/" style="background: #F1F5F9; color: #1E293B; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600;" class="btn btn-outline-secondary">
+                🔍 ค้นหาบนหน้าหลัก FreelanceHub &rarr;
+            </a>
+        </div>
+    </div>
+
+    <div id="alert-box" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 500;" class="d-none"></div>
+
+    <!-- Application Modal / Form -->
+    <div id="apply-modal" style="background: white; border: 2px solid #0A66C2; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(10,102,194,0.12);" class="d-none">
+        <h3 id="modal-job-title" style="margin-top: 0; color: #0F172A;">📝 ส่งใบสมัครงาน: <span id="target-job-name" style="color: #0A66C2;"></span></h3>
+        <form id="apply-form" enctype="multipart/form-data">
+            <input type="hidden" id="apply-job-id" name="jobId">
+            <div style="margin-bottom: 14px;">
+                <label style="font-weight: 600; font-size: 13px; color: #1E293B;" class="form-label">ข้อความแนะนำตัว / Cover Note</label>
+                <textarea id="apply-cover-note" name="coverNote" rows="3" placeholder="แนะนำตัวสั้นๆ ทักษะ และประสบการณ์ที่เกี่ยวข้อง..." style="margin-bottom: 0;" class="form-control"></textarea>
+            </div>
+            <div style="background: #F8FAFC; border: 2px dashed #CBD5E1; border-radius: 8px; padding: 16px; margin-bottom: 18px;">
+                <label style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; color: #0F172A;" class="form-label">📎 แนบไฟล์ Resume / Portfolio (PDF หรือ รูปภาพ ไม่เกิน 10MB) *</label>
+                <input type="file" id="apply-file" name="file" accept=".pdf,.doc,.docx,.jpg,.png" required style="margin-bottom: 0;" class="form-control">
+            </div>
+            <div style="display: flex; gap: 10px;" class="d-flex gap-2">
+                <button type="submit" style="background: linear-gradient(135deg, #0A66C2 0%, #004E99 100%); color: white; padding: 10px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;" class="btn btn-primary">ยืนยันส่งใบสมัคร</button>
+                <button type="button" id="btn-cancel-apply" style="background: #64748B; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer;" class="btn">ยกเลิก</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Section 1: ประวัติการสมัครงานของฉัน (Ownership Check: ดูได้เฉพาะของตนเอง) -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 22px; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+        <h3 style="margin-top: 0; color: #0F172A; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+            📋 ประวัติการสมัครงานของฉัน (My Applications)
+        </h3>
+        <% if (!myApplications || myApplications.length === 0) { %>
+            <p style="color: #64748B; font-size: 13px; margin: 0;">คุณยังไม่ได้ส่งใบสมัครงานใดๆ เลือกตำแหน่งงานด้านล่างเพื่อส่งใบสมัคร</p>
+        <% } else { %>
+            <div style="overflow-x: auto;">
+                <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;" class="table align-middle">
+                    <thead>
+                        <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                            <th style="padding: 12px 14px;">ตำแหน่งงาน</th>
+                            <th style="padding: 12px 14px;">วันที่ส่งสมัคร</th>
+                            <th style="padding: 12px 14px;">เอกสารที่แนบ</th>
+                            <th style="padding: 12px 14px; text-align: center;">ผลการพิจารณา</th>
+                            <th style="padding: 12px 14px; text-align: right;">รายละเอียด</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% myApplications.forEach(function(app) { %>
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 12px 14px; font-weight: 600; color: #0F172A;">
+                                    <a href="/jobs/<%= app.job_id %>" style="color: #0F172A; text-decoration: none;">
+                                        <%= app.job_title %>
+                                    </a>
+                                </td>
+                                <td style="padding: 12px 14px; color: #64748B;"><%= new Date(app.created_at).toLocaleDateString('th-TH') %></td>
+                                <td style="padding: 12px 14px;">
+                                    <% if (app.resume_attachment_id) { %>
+                                        <a href="/api/files/<%= app.resume_attachment_id %>" target="_blank" style="color: #2563EB; text-decoration: underline;">
+                                            📄 <%= app.resume_name || 'Resume' %>
+                                        </a>
+                                    <% } else { %>
+                                        <span style="color: #64748B;">📄 <%= app.resume_name || 'Resume.pdf' %></span>
+                                    <% } %>
+                                </td>
+                                <td style="padding: 12px 14px; text-align: center;">
+                                    <span style="background: <%= app.status === 'accepted' ? '#DCFCE7' : app.status === 'rejected' ? '#FEE2E2' : '#FEF3C7' %>; color: <%= app.status === 'accepted' ? '#166534' : app.status === 'rejected' ? '#991B1B' : '#92400E' %>; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700;">
+                                        <%= app.status === 'accepted' ? 'รับเข้าทำงาน' : app.status === 'rejected' ? 'ปฏิเสธ' : 'รอพิจารณา' %>
+                                    </span>
+                                </td>
+                                <td style="padding: 12px 14px; text-align: right;">
+                                    <a href="/jobs/<%= app.job_id %>" style="color: #0A66C2; font-weight: 600; text-decoration: none; font-size: 12px;">
+                                        ดูงาน &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table></div>
+            </div>
+        <% } %>
+    </section>
+
+    <!-- Section 2: ค้นหาและรายการงานที่เปิดรับสมัคร (Approved Jobs) -->
+    <section style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 22px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+        <h3 style="margin-top: 0; color: #0F172A; font-size: 17px; margin-bottom: 16px;">
+            💼 ตำแหน่งงานที่เปิดรับสมัคร (Active Job Openings)
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 14px;" class="d-flex flex-column gap-3">
+            <% if (!jobs || jobs.length === 0) { %>
+                <p style="color: #64748B;">ยังไม่มีตำแหน่งงานที่เปิดรับสมัครในขณะนี้</p>
+            <% } else { %>
+                <% jobs.forEach(function(job) { %>
+                    <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px; background: #FAFAFA;" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div style="max-width: 65%;">
+                            <span style="background: #E7F0F9; color: #1E40AF; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">
+                                <%= job.category %>
+                            </span>
+                            <h4 style="margin: 6px 0 2px 0; font-size: 17px;">
+                                <a href="/jobs/<%= job.id %>" style="color: #0F172A; text-decoration: none;" onmouseover="this.style.color='#0A66C2'" onmouseout="this.style.color='#0F172A'">
+                                    <%= job.title %>
+                                </a>
+                            </h4>
+                            <div style="color: #64748B; font-size: 13px; margin-bottom: 6px;">
+                                บริษัท: <strong><%= job.company_name || 'บริษัท เทคโนโลยี อินโนเวชั่น จำกัด' %></strong> | สถานที่: <%= job.location %>
+                            </div>
+                            <p style="margin: 0; color: #475569; font-size: 13px; line-height: 1.4;">
+                                <%= job.description %>
+                            </p>
+                        </div>
+                        <div style="text-align: right;" class="d-flex flex-column align-items-end gap-2">
+                            <div style="font-size: 18px; font-weight: 800; color: #0A66C2;">
+                                <%= Number(job.budget).toLocaleString() %> ฿
+                            </div>
+                            <div style="display: flex; gap: 6px;" class="d-flex gap-1">
+                                <a href="/jobs/<%= job.id %>" style="background: white; border: 1px solid #CBD5E1; color: #334155; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none;" class="btn btn-outline-secondary">
+                                    📄 หน้ารายละเอียด
+                                </a>
+                                <button type="button" class="btn-open-apply btn" data-id="<%= job.id %>" data-title="<%= job.title %>" style="background: linear-gradient(135deg, #0A66C2 0%, #004E99 100%); color: white; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; border: none; cursor: pointer;">
+                                    📝 สมัครงาน
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const alertBox = document.getElementById('alert-box');
+    const modal = document.getElementById('apply-modal');
+    const cancelBtn = document.getElementById('btn-cancel-apply');
+    const form = document.getElementById('apply-form');
+    const applyJobIdInput = document.getElementById('apply-job-id');
+    const targetJobName = document.getElementById('target-job-name');
+
+    function showAlert(msg, isSuccess) {
+        alertBox.textContent = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        alertBox.style.color = isSuccess ? '#166534' : '#991B1B';
+        alertBox.style.border = `1px solid ${isSuccess ? '#86EFAC' : '#FCA5A5'}`;
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('.btn-open-apply').forEach(btn => {
+        btn.addEventListener('click', () => {
+            applyJobIdInput.value = btn.dataset.id;
+            targetJobName.textContent = btn.dataset.title;
+            modal.style.display = 'block';
+            modal.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+
+        try {
+            const res = await fetch('/api/seeker/apply', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'ส่งใบสมัครล้มเหลว');
+
+            showAlert('✅ ส่งใบสมัครงานและแนบ Resume เรียบร้อยแล้ว!', true);
+            modal.style.display = 'none';
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (err) {
+            showAlert('❌ ' + err.message, false);
+        }
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>
